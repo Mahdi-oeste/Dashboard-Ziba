@@ -1,0 +1,1086 @@
+/* ==========================================================================
+   RESET & PALETA DE COLORES OFICIAL (OPTIMIZADO PARA JARDÍN ZIBÁ)
+   ========================================================================== */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 30px;
+}
+
+:root {
+  --primary-orange: #F4981B;   /* Naranja Marca */
+  --ai-blue: #1A73E8;          /* Azul Comercial IA */
+  --pure-black: #000000;       /* Negro */
+  --neutral-gray: #BCBABB;     /* Gris Muestra */
+  --pure-white: #FFFFFF;       /* Blanco */
+  --bg-app: #F7F8FA;           /* Fondo general limpio */
+  --text-dark: #1E2022;
+  --text-muted: #555555;       
+  --radius-lg: 18px;
+  --radius-md: 12px;
+  --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.05);
+  --transition: all 0.25s ease;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+  background-color: var(--bg-app);
+  color: var(--text-dark);
+  display: flex !important; 
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   BARRA LATERAL (SIDEBAR)
+   ========================================================================== */
+.sidebar {
+  width: 260px;
+  background-color: var(--pure-white);
+  border-right: 1px solid rgba(188, 186, 187, 0.3);
+  padding: 30px 24px;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+  z-index: 100;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 45px;
+}
+
+.logo-circle {
+  width: 44px;
+  height: 44px;
+  background: var(--primary-orange);
+  color: var(--pure-white);
+  font-weight: bold;
+  font-size: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  box-shadow: 0 4px 10px rgba(244, 152, 27, 0.25);
+}
+
+.logo-circle svg {
+  width: 22px;
+  height: 22px;
+  color: var(--pure-white);
+}
+
+.sidebar-logo h2 {
+  font-size: 1.4rem;
+  font-weight: bold;
+  line-height: 1.1;
+}
+
+.sidebar-logo p {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex-grow: 1;
+}
+
+.sidebar-title {
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: var(--neutral-gray);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 1.05rem;
+  font-weight: bold;
+  border-radius: var(--radius-md);
+  transition: var(--transition);
+}
+
+.sidebar-link:hover {
+  background-color: rgba(188, 186, 187, 0.15);
+  color: var(--text-dark);
+}
+
+.sidebar-link.active {
+  background-color: var(--primary-orange);
+  color: var(--pure-white);
+  box-shadow: 0 4px 15px rgba(244, 152, 27, 0.25);
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid var(--neutral-gray);
+  color: var(--text-muted);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font-size: 0.95rem;
+  font-weight: bold;
+  transition: var(--transition);
+}
+
+.logout-btn:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: var(--pure-black);
+  border-color: var(--pure-black);
+}
+
+/* ==========================================================================
+   CONTENIDO PRINCIPAL Y CONTROLES (DISEÑO UNIFICADO AL 100%)
+   ========================================================================== */
+.main-content {
+  margin-left: 260px;
+  padding: 40px 50px;
+  width: calc(100% - 260px);
+  display: flex;
+  flex-direction: column;
+  gap: 35px; 
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.topbar .logout-btn {
+  background-color: var(--pure-white);
+}
+
+.topbar h1 {
+  font-size: 1.85rem;
+  font-weight: bold;
+  color: var(--pure-black);
+}
+
+.topbar p {
+  font-size: 1rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* Contenedor General de Controles */
+.calendar-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* ESTRUCTURA BASE SIMÉTRICA PARA AMBOS MÓDULOS DE NAVEGACIÓN */
+.month-navigation-wrapper,
+.year-selector {
+  display: flex;
+  align-items: center;
+  background: var(--pure-white);
+  border: 1px solid rgba(188, 186, 187, 0.35);
+  border-radius: 30px;
+  padding: 2px 4px;
+  box-shadow: var(--shadow-sm);
+  height: 40px; 
+}
+
+/* DISEÑO UNIFICADO DE BOTONES FLECHA (MES Y AÑO) */
+.month-arrow-btn,
+.year-btn {
+  background: transparent;
+  border: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: var(--text-dark);
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+}
+
+.month-arrow-btn:hover,
+.year-btn:hover {
+  background: rgba(188, 186, 187, 0.15);
+  color: var(--pure-black);
+}
+
+/* SELECTOR EXCLUSIVO DE TEXTO CENTRAL */
+.premium-select {
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: bold;
+  color: var(--text-dark);
+  text-align: center;
+  min-width: 90px; 
+  height: 36px;
+  padding: 0 8px;
+  border: none;
+  background-color: transparent;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.premium-select::-ms-expand {
+  display: none;
+}
+
+/* ==========================================================================
+   CONSOLA DE RENDIMIENTO EXTENDIDA
+   ========================================================================== */
+.visual-split-box {
+  display: flex;
+  flex-direction: column;
+}
+
+.block-header-inline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.save-config-inline-btn {
+  background-color: var(--pure-black);
+  color: var(--pure-white);
+  border: none;
+  padding: 8px 18px;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: bold;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.save-config-inline-btn:hover {
+  background-color: var(--primary-orange);
+  box-shadow: 0 4px 12px rgba(244, 152, 27, 0.2);
+}
+
+.tables-split-layout {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  flex-grow: 1;
+}
+
+.table-subpanel {
+  background: #FAFBFB;
+  border: 1px solid rgba(188, 186, 187, 0.25);
+  border-radius: var(--radius-md);
+  padding: 14px;
+}
+
+.subpanel-title {
+  font-size: 0.85rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(188, 186, 187, 0.3);
+}
+
+.subpanel-title.edit-title { color: var(--text-muted); }
+.subpanel-title.ai-title { color: var(--ai-blue); }
+
+.table-editable input.input-table-cell {
+  width: 65px;
+  height: 28px;
+  border: 1px solid rgba(188, 186, 187, 0.4);
+  border-radius: 6px;
+  background-color: var(--pure-white);
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: bold;
+  text-align: center;
+  color: var(--pure-black);
+  outline: none;
+  transition: var(--transition);
+}
+
+.table-editable input.input-table-cell:focus {
+  border-color: var(--primary-orange);
+  box-shadow: 0 0 5px rgba(244, 152, 27, 0.2);
+}
+
+.table-view-only td {
+  font-weight: bold;
+  color: var(--ai-blue);
+}
+
+.grid-compact {
+  grid-template-columns: repeat(3, 1fr) !important;
+  gap: 8px !important;
+}
+
+.mes-celda select.select-mes-cell {
+  width: 100%;
+  height: 26px;
+  border: 1px solid rgba(188, 186, 187, 0.4);
+  border-radius: 6px;
+  background-color: var(--pure-white);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: bold;
+  color: var(--text-dark);
+  outline: none;
+  text-align: center;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   INDICADORES Y MATRICES DE ENTORNO (ALINEACIÓN TRIPLE HORIZONTAL OFICIAL)
+   ========================================================================== */
+.indicadores-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) !important; /* Forzar 3 columnas idénticas */
+  gap: 20px;
+  width: 100%;
+}
+
+.indicador-box {
+  background: var(--pure-white);
+  border: 1px solid rgba(188, 186, 187, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.indicador-box h3 {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: var(--pure-black);
+}
+
+.box-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.leyenda-escala {
+  font-size: 0.85rem;
+  background-color: #F8F9FA;
+  padding: 4px 12px;
+  border-radius: 30px;
+  border: 1px solid rgba(188, 186, 187, 0.2);
+  font-weight: bold;
+}
+
+.tabla-demanda {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.tabla-demanda th, .tabla-demanda td {
+  padding: 8px 10px;
+  text-align: left;
+  border-bottom: 1px solid rgba(188, 186, 187, 0.15);
+  font-size: 0.9rem;
+}
+
+.tabla-demanda th {
+  font-weight: bold;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  text-transform: uppercase;
+}
+
+.matriz-meses {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr); 
+  gap: 10px;
+}
+
+.mes-celda {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: var(--radius-md);
+  padding: 8px;
+}
+
+.mes-celda span {
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-top: 2px;
+}
+
+/* ==========================================================================
+   KPIS Y GRÁFICAS
+   ========================================================================== */
+.kpi-chart-row {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+}
+
+.dashboard {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important; 
+  gap: 20px;
+  flex: 1.15;
+}
+
+.dashboard-card {
+  background: var(--pure-white);
+  border: 1px solid rgba(188, 186, 187, 0.3);
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.dashboard-card span {
+  font-size: 1.2rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: bold;
+}
+
+.dashboard-card h3 {
+  font-size: 2.1rem;
+  font-weight: bold;
+  color: var(--text-dark);
+}
+
+.dashboard-card.highlight h3 {
+  color: var(--primary-orange);
+}
+
+.chart-card {
+  background: var(--pure-white);
+  border: 1px solid rgba(188, 186, 187, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  flex: 1;
+}
+
+.chart-bars {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  height: 160px;
+  border-bottom: 1px solid rgba(188, 186, 187, 0.2);
+}
+
+.chart-bar-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.chart-value {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: var(--text-muted);
+}
+
+.chart-bar {
+  width: 24px;
+  background: linear-gradient(180deg, var(--primary-orange) 0%, #FCD8A5 100%);
+  border-radius: 4px 4px 0 0;
+}
+
+.chart-month {
+  font-size: 0.75rem;
+  font-weight: bold;
+  margin-top: 6px;
+  color: var(--text-muted);
+}
+
+/* ==========================================================================
+   CALENDARIO DINÁMICO REDISEÑADO CON FONDOS E INTERIOR DE ALTA COMPRESIÓN
+   ========================================================================== */
+.calendar-section {
+  background: var(--pure-white);
+  border: 1px solid rgba(188, 186, 187, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 30px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Barra de leyenda actualizada */
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin-bottom: 25px;
+  background: #F8F9FA;
+  padding: 10px 20px;
+  border-radius: var(--radius-md);
+  width: fit-content;
+  border: 1px solid rgba(188, 186, 187, 0.2);
+}
+
+.legend-description {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-weight: bold;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+.legend-box-color {
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+}
+.legend-box-color.color-libre { background-color: #E2F7E3; }
+.legend-box-color.color-ocupado { background-color: #1A1A1A; }
+
+/* Grilla del Mes */
+.single-calendar-container {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 12px;
+  width: 100%;
+}
+
+.calendar-wrapper-empty {
+  background-color: transparent;
+  pointer-events: none;
+}
+
+/* REGLAS EXCLUSIVAS PARA LA CELDA DE DÍA INDIVIDUAL */
+.day {
+  border-radius: var(--radius-md);
+  height: 95px; 
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  transition: var(--transition);
+}
+
+/* ESTADO 1: FECHA LIBRE (Verde Claro) */
+.day.libre {
+  background-color: #E2F7E3 !important; /* Verde claro comercial */
+  border: 1px solid #BCE7C0 !important;
+}
+.day.libre .day-number {
+  color: #1E2022;
+}
+
+/* ESTADO 2: FECHA OCUPADA (Negro Puro) */
+.day.ocupado {
+  background-color: #1A1A1A !important; /* Negro contrastado */
+  border: 1px solid #000000 !important;
+}
+.day.ocupado .day-number {
+  color: #FFFFFF; /* Texto blanco para legibilidad superior */
+}
+.day.ocupado .price-row span {
+  color: #999999; /* Textos de etiqueta opacados en fondo oscuro */
+}
+
+.day:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary-orange) !important;
+  box-shadow: var(--shadow-sm);
+}
+
+.day-number {
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+/* Contenedor de precios */
+.day-prices-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  gap: 3px;
+}
+
+.price-row {
+  font-size: 0.92rem; 
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* AZUL EXCLUSIVO: Sugerencia IA */
+.price-row.ia-price {
+  color: var(--ai-blue) !important;
+}
+
+/* ROJO EXCLUSIVO: Precios Reales */
+.price-row.real-price {
+  color: #FF4D4D !important;
+}
+
+.price-row span {
+  font-weight: bold;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  margin-right: 2px;
+}
+
+/* Resaltado del día actual */
+.day.today {
+  outline: 3px solid var(--primary-orange);
+  outline-offset: -1px;
+}
+
+.day-name-header {
+  font-size: 0.9rem;
+  font-weight: bold;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 10px 0;
+  background-color: #F8F9FA;
+  border-radius: 6px;
+  text-transform: uppercase;
+}
+
+/* ==========================================================================
+   COTIZADOR IA & COMPONENTES RESTANTES
+   ========================================================================== */
+.analytics-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 35px;
+  width: 100%;
+}
+
+.quote-card {
+  background: var(--pure-white);
+  border: 1px solid rgba(188, 186, 187, 0.3);
+  border-radius: var(--radius-lg);
+  padding: 35px;
+}
+
+.quote-card h2 {
+  font-size: 1.35rem;
+  font-weight: bold;
+  color: var(--pure-black);
+}
+
+.quote-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 16px;
+  align-items: flex-end;
+  margin-top: 20px;
+}
+
+.quote-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quote-group label {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.quote-group input {
+  height: 48px;
+  border: 1px solid rgba(188, 186, 187, 0.5);
+  border-radius: var(--radius-md);
+  padding: 0 14px;
+  font-size: 1rem;
+  outline: none;
+}
+
+.quote-group input:focus {
+  border-color: var(--primary-orange);
+}
+
+.cotizar-btn {
+  height: 48px;
+  padding: 0 30px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--primary-orange);
+  color: var(--pure-white);
+  font-size: 1.05rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.cotizar-btn:hover {
+  filter: brightness(1.08);
+}
+
+.resultado-cotizacion {
+  margin-top: 30px;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  background: #FAFBFB;
+  border: 1px dashed var(--neutral-gray);
+  display: none;
+}
+
+.resultado-cotizacion.active { display: block; }
+
+.resultado-demanda {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  background: #FFF3DF;
+  color: var(--primary-orange);
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.factores {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 15px;
+}
+
+.factor {
+  padding: 6px 14px;
+  background: var(--pure-white);
+  border: 1px solid rgba(188, 186, 187, 0.3);
+  border-radius: 30px;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+/* REGLAS RESPONSIVAS */
+@media (max-width: 1600px) {
+  .indicadores-container { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 1280px) {
+  .kpi-chart-row { flex-direction: column; }
+  .dashboard, .chart-card { width: 100%; }
+  .tables-split-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .sidebar { width: 70px; padding: 20px 10px; }
+  .sidebar h2, .sidebar p, .sidebar-title, .logout-btn { display: none; }
+  .main-content { margin-left: 70px; width: calc(100% - 70px); padding: 24px; }
+  .quote-form { grid-template-columns: 1fr; }
+}
+
+/* ==========================================================================
+   🔒 SECCIÓN EXCLUSIVA: ENCAPSULAMIENTO PREMIUM Y ALINEACIÓN DE INDICADORES
+   ========================================================================== */
+
+/* Reducción vertical y unificación estética en filas de todas las tablas */
+#tbodyDiasBase td,
+#tbodyMesesBase td,
+#tbodyPeriodosEspeciales td {
+  padding: 6px 6px !important; 
+  vertical-align: middle !important;
+  background-color: var(--pure-white) !important;
+  height: 40px;
+}
+
+/* ==========================================================================
+   🏆 SELECTOR RECTANGULAR ESTILIZADO CON ESQUINAS REDONDEADAS (USUARIO)
+   ========================================================================== */
+#tbodyMesesBase .select-mes-cell {
+  width: 115px !important;
+  height: 28px !important; 
+  padding: 0 6px !important;
+  font-family: inherit;
+  font-size: 0.82rem; 
+  font-weight: bold;
+  
+  border: 1.5px solid rgba(188, 186, 187, 0.5) !important; 
+  border-radius: 6px !important; 
+  background-color: var(--pure-white) !important;
+  color: var(--text-dark) !important;
+  
+  cursor: pointer;
+  outline: none;
+  text-align: center;
+  appearance: none;
+  -webkit-appearance: none;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.15s ease-in-out;
+}
+
+/* Interacciones sutiles del selector de meses */
+#tbodyMesesBase .select-mes-cell:hover {
+  border-color: rgba(244, 152, 27, 0.5) !important;
+  box-shadow: 0 2px 6px rgba(244, 152, 27, 0.08);
+}
+
+#tbodyMesesBase .select-mes-cell:focus {
+  border-color: var(--primary-orange) !important;
+  box-shadow: 0 0 0 2px rgba(244, 152, 27, 0.12) !important;
+}
+
+/* Forzar que las opciones del desplegable mantengan fondo blanco para legibilidad */
+#tbodyMesesBase .select-mes-cell option {
+  background-color: var(--pure-white) !important;
+  color: var(--text-dark) !important;
+}
+
+/* 📅 CAMPOS DE SELECCIÓN DE FECHAS (Tabla 3: Periodos Especiales) */
+.rango-fecha-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.separador-fecha {
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: var(--text-muted);
+}
+
+.input-date-custom {
+  width: 100px !important;
+  height: 28px !important;
+  padding: 0 4px !important;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: bold;
+  border: 1.5px solid rgba(188, 186, 187, 0.5) !important;
+  border-radius: 6px !important; 
+  background-color: var(--pure-white) !important;
+  color: var(--text-dark) !important;
+  outline: none;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.input-date-custom:focus {
+  border-color: var(--primary-orange) !important;
+}
+
+/* ==========================================================================
+   🤖 BADGES DE LA IA CON DISEÑO RECTANGULAR IDÉNTICO AL DEL USUARIO
+   ========================================================================== */
+.contenedor-badge-ia {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  
+  /* Clonación de dimensiones y geometría del select */
+  width: 115px !important;
+  height: 28px !important; 
+  padding: 0 6px !important;
+  border-radius: 6px !important; 
+  border: 1.5px solid rgba(188, 186, 187, 0.5) !important;
+  
+  font-family: inherit;
+  font-size: 0.82rem; 
+  font-weight: bold;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* ==========================================================================
+   🎨 COMPORTAMIENTO SEMÁFORO HOMOGÉNEO (CORREGIDO PARA SELECT Y BADGE)
+   ========================================================================== */
+
+/* 🔴 MESES MUY ALTA DEMANDA */
+#tbodyMesesBase select.select-mes-cell.very-high,
+.very-high.contenedor-badge-ia { 
+  background-color: #FAD4D0 !important; 
+  color: #7A110A !important; 
+  border-color: #A1150C !important; 
+}
+
+/* 🟠 MESES ALTA DEMANDA */
+#tbodyMesesBase select.select-mes-cell.high,
+.high.contenedor-badge-ia { 
+  background-color: #FFE6B7 !important; 
+  color: #874F00 !important; 
+  border-color: #A15E00 !important; 
+}
+
+/* 🟢 MESES MEDIA DEMANDA */
+#tbodyMesesBase select.select-mes-cell.medio,
+.medio.contenedor-badge-ia { 
+  background-color: #C2ECCF !important; 
+  color: #0B5324 !important; 
+  border-color: #0C612A !important; 
+}
+
+/* 🔵 MESES BAJA DEMANDA */
+#tbodyMesesBase select.select-mes-cell.low,
+.low.contenedor-badge-ia { 
+  background-color: #D2E3FC !important; 
+  color: #1255B3 !important; 
+  border-color: #1561D6 !important; 
+}
+
+/* ⚪ MESES MUY BAJA DEMANDA */
+#tbodyMesesBase select.select-mes-cell.very-low,
+.very-low.contenedor-badge-ia { 
+  background-color: #E4E7EB !important; 
+  color: #43474B !important; 
+  border-color: #4B5055 !important; 
+}
+
+/* ==========================================================================
+   🔒 AJUSTES ADAPTATIVOS PARA TARJETAS DE KPIS (EVITA DESBORDES DE MONEDA)
+   ========================================================================== */
+
+/* Rediseño compacto para soportar el formato extendido de texto en Ingresos Totales */
+.dashboard .dashboard-card:nth-child(2) h3 {
+  font-size: 1.15rem !important; 
+  line-height: 1.4 !important;
+  font-weight: 700 !important;
+  margin-top: 5px !important;
+  white-space: normal !important; 
+}
+
+.dashboard .dashboard-card:nth-child(2) {
+  justify-content: flex-start !important;
+  padding: 18px 20px !important;
+}
+
+/* Rediseño compacto para la tarjeta de Rango de Tarifas */
+.dashboard .dashboard-card:last-child h3 {
+  font-size: 1.15rem !important; 
+  line-height: 1.4 !important;
+  font-weight: 700 !important;
+  color: var(--text-dark) !important;
+  margin-top: 5px !important;
+  white-space: normal !important; 
+}
+
+.dashboard .dashboard-card:last-child {
+  justify-content: flex-start !important;
+  padding: 18px 20px !important;
+}
+
+/* ==========================================================================
+   🔒 SECCIÓN EXCLUSIVA: DROPDOWN DE PERFIL PREMIUM (KEYCLOAK SINCRO)
+   ========================================================================== */
+.perfil-dropdown-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.perfil-avatar-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background-color: var(--pure-white);
+  border: 1px solid rgba(188, 186, 187, 0.4);
+  padding: 8px 16px;
+  border-radius: 30px;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 0.95rem;
+  color: var(--text-dark);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+  user-select: none;
+}
+
+.perfil-avatar-btn:hover {
+  border-color: var(--primary-orange);
+  background-color: rgba(244, 152, 27, 0.03);
+}
+
+.user-avatar-icon {
+  color: var(--text-muted);
+  transition: var(--transition);
+}
+
+.perfil-avatar-btn:hover .user-avatar-icon {
+  color: var(--primary-orange);
+}
+
+/* Menú Desplegable Flotante */
+.perfil-dropdown-menu {
+  position: absolute;
+  top: 115%;
+  right: 0;
+  background-color: var(--pure-white);
+  border: 1px solid rgba(188, 186, 187, 0.3);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  padding: 6px;
+  min-width: 160px;
+  z-index: 200;
+  
+  /* Comportamiento oculto reactivo */
+  display: none;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Clase activa manejada por JS */
+.perfil-dropdown-menu.show {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.dropdown-logout-action-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  color: #FF4D4D;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: var(--transition);
+}
+
+.dropdown-logout-action-btn:hover {
+  background-color: #FFF5F5;
+  color: #D32F2F;
+}

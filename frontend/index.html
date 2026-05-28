@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ziba Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/keycloak-js@latest/dist/keycloak.min.js"></script>
+</head>
+<body>
+
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-circle">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucid-leaf-icon">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8a7 7 0 0 1-9 8.2z"></path>
+          <path d="M19 2c-2.26 4.33-5.27 7.14-8 10"></path>
+        </svg>
+      </div>
+      <div>
+        <h2>JARDÍN ZIBÁ</h2>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <span class="sidebar-title">NAVEGACIÓN</span>
+      <a href="#topbar" class="sidebar-link active">Dashboard</a>
+    </div>
+
+  </aside>
+
+  <main class="main-content">
+      
+    <header class="topbar" id="topbar">
+      <div>
+        <h1>Reservaciones</h1>
+      </div>
+      
+      <div class="perfil-dropdown-wrapper" id="perfilDropdownTrigger">
+        <div class="perfil-avatar-btn">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="user-avatar-icon">
+            <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <span id="txtNombreUsuarioTopbar">Cargando...</span>
+        </div>
+        
+        <div class="perfil-dropdown-menu" id="perfilDropdownMenu">
+          <button id="logoutBtn" class="dropdown-logout-action-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+            Cerrar sesión
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <section class="indicadores-container">
+      
+      <div class="indicador-box visual-split-box">
+        <div class="block-header-inline">
+          <h3>Ponderación por día de la semana de 0 a 100 </h3>
+        </div>
+        
+        <div class="table-subpanel" style="margin-top: 15px;">
+          <table class="tabla-demanda table-editable">
+            <thead>
+              <tr>
+                <th>Día</th>
+                <th>PROPUESTO POR EL USUARIO</th>
+                <th>PROPUESTO POR LA IA</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyDiasBase"></tbody>
+          </table>
+        </div>
+      </div>
+
+
+      <div class="indicador-box visual-split-box">
+        <div class="block-header-inline">
+          <h3>Ponderación por mes</h3>
+        </div>
+
+        <div class="table-subpanel" style="margin-top: 15px;">
+          <table class="tabla-demanda table-editable">
+            <thead>
+              <tr>
+                <th>Mes</th>
+                <th>PROPUESTO POR EL USUARIO</th>
+                <th>PROPUESTO POR LA IA</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyMesesBase"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="indicador-box visual-split-box">
+        <div class="block-header-inline">
+          <h3>Periodos Especiales</h3>
+        </div>
+
+        <div class="table-subpanel" style="margin-top: 15px;">
+          <table class="tabla-demanda table-editable">
+            <thead>
+              <tr>
+                <th>Rango de Fechas</th>
+                <th style="text-align: center;">USUARIO</th>
+                <th style="text-align: center;">IA</th>
+              </tr>
+            </thead>
+            <tbody id="tbodyPeriodosEspeciales">
+              <tr>
+                <td>
+                  <div class="rango-fecha-container">
+                    <input type="date" id="fechaInicioEspecial" class="input-date-custom" onchange="calcularPeriodoEspecialIA()">
+                    <span class="separador-fecha">al</span>
+                    <input type="date" id="fechaFinEspecial" class="input-date-custom" onchange="calcularPeriodoEspecialIA()">
+                  </div>
+                </td>
+                <td style="text-align: center; vertical-align: middle;">
+                  <input type="number" id="inputPondEspecialUser" class="input-table-cell" min="0" max="100"  onchange="guardarPeriodoEspecialBD(this)">
+                </td>
+                <td style="text-align: center; vertical-align: middle;">
+                  <div id="txtPondEspecialIA" class="contenedor-badge-ia medio">—</div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <section class="kpi-chart-row">
+      <div class="dashboard">
+        <div class="dashboard-card">
+          <span>Reservaciones totales 2026-2027</span>
+          <h3 id="kpiReservaciones">0</h3>
+        </div>
+        <div class="dashboard-card highlight">
+          <span>Ingresos totales 2026-2027</span>
+          <h3 id="kpiIngreso">$0</h3>
+        </div>
+        <div class="dashboard-card">
+          <span>Porcentaje de ocupación total 2026-2027</span>
+          <h3 id="kpiOcupacion">0%</h3>
+        </div>
+        <div class="dashboard-card">
+          <span>Rango de Tarifas de los eventos contratados 2026-2027</span>
+          <h3 id="kpiPrecio">Minino: $300,000.00 M.N.</h3>
+          <h3 id="kpiPrecio">Medio: $500,000.00 M.N.</h3>
+          <h3 id="kpiPrecio">Máximo: $700,000.00 M.N.</h3>
+        </div>
+      </div>
+
+      <div class="chart-card">
+        <h2>Ocupación 2026-2027</h2>
+        <div id="chartBars" class="chart-bars"></div>
+      </div>
+    </section>
+
+    <div class="analytics-wrapper">
+      
+      <section class="calendar-section" id="calendario">
+        <div class="calendar-header-wrapper">
+          <div class="calendar-header-text">
+            <h2 id="calendarMonthTitle">Calendario</h2>
+          </div>
+          
+          <div class="calendar-controls">
+            <div class="month-navigation-wrapper">
+              <button class="month-arrow-btn" onclick="navegarMes(-1)">❮</button>
+              <select id="monthSelector" class="premium-select" onchange="actualizarCalendarioPorSelectores()"></select>
+              <button class="month-arrow-btn" onclick="navegarMes(1)">❯</button>
+            </div>
+            
+            <div class="year-selector">
+              <button class="year-btn" onclick="navegarAnioBoton(-1)">-</button>
+              <select id="yearSelector" class="premium-select" onchange="actualizarCalendarioPorSelectores()"></select>
+              <button class="year-btn" onclick="navegarAnioBoton(1)">+</button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="legend">
+          <span style="font-size: 0.9rem; margin-right: 4px;">📌</span>
+          <span class="legend-description">Esquema visual de celdas:</span>
+          <div class="legend-item"><div class="legend-box-color color-libre"></div> Fecha Disponible </div>
+          <div class="legend-item"><div class="legend-box-color color-ocupado"></div> Fecha Reservada </div>
+          <div class="legend-item"><span style="color: var(--ai-blue); font-weight: bold;">IA:</span> Tarifa IA </div>
+          <div class="legend-item"><span style="color: #FF4D4D; font-weight: bold;">U:</span> Tarifa del usuario</div>
+        </div>
+        
+        <div id="singleCalendarContainer" class="single-calendar-container"></div>
+      </section>
+
+    </div>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>
