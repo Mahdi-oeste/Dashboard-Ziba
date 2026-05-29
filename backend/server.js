@@ -43,12 +43,6 @@ async function recalcularYGuardarCalendario() {
   }
 }
 
-/* helper: lanza el recalculo en background sin bloquear la respuesta HTTP */
-function triggerRecalculo() {
-  recalcularYGuardarCalendario().catch(e =>
-    console.error("⚠️ Trigger recalculo error:", e.message)
-  );
-}
 
 /* ==========================================================================
    HEALTHCHECK
@@ -149,8 +143,8 @@ app.put("/actualizar-ponderacion-dia", async (req, res) => {
       "UPDATE ponderacion_dias SET pond_day_user=$1 WHERE id_day=$2",
       [pond_day_user, id_day]
     );
+    await recalcularYGuardarCalendario();
     res.json({ status: "ok" });
-    triggerRecalculo();
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -173,8 +167,8 @@ app.put("/actualizar-ponderacion-mes", async (req, res) => {
       "UPDATE ponderacion_meses SET pond_month_user=$1 WHERE id_month=$2",
       [pond_month_user, id_month]
     );
+    await recalcularYGuardarCalendario();
     res.json({ status: "ok" });
-    triggerRecalculo();
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -184,10 +178,10 @@ app.put("/actualizar-ponderacion-mes", async (req, res) => {
 app.get("/periodos-especiales", async (req, res) => {
   try {
     const r = await pool.query(
-      `SELECT id, nombre,
+      `SELECT id_fecha_especial AS id, nombre,
               TO_CHAR(fecha_inicio,'YYYY-MM-DD') AS fecha_inicio,
               TO_CHAR(fecha_fin,   'YYYY-MM-DD') AS fecha_fin,
-              pond_label AS pond_user
+              pond_especial_user AS pond_user
        FROM fechas_especiales ORDER BY fecha_inicio`
     );
     res.json(r.rows);
@@ -200,12 +194,12 @@ app.post("/periodos-especiales", async (req, res) => {
     if (!fecha_inicio || !fecha_fin)
       return res.status(400).json({ error: "Faltan fechas" });
     const r = await pool.query(
-      `INSERT INTO fechas_especiales (nombre, fecha_inicio, fecha_fin, pond_label)
+      `INSERT INTO fechas_especiales (nombre, fecha_inicio, fecha_fin, pond_especial_user)
        VALUES ($1,$2,$3,$4) RETURNING *`,
       [nombre||'', fecha_inicio, fecha_fin, pond_user||'Medio']
     );
+    await recalcularYGuardarCalendario();
     res.json(r.rows[0]);
-    triggerRecalculo();
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -214,20 +208,20 @@ app.put("/periodos-especiales/:id", async (req, res) => {
     const { nombre, fecha_inicio, fecha_fin, pond_user } = req.body;
     await pool.query(
       `UPDATE fechas_especiales
-       SET nombre=$1, fecha_inicio=$2, fecha_fin=$3, pond_label=$4
-       WHERE id=$5`,
+       SET nombre=$1, fecha_inicio=$2, fecha_fin=$3, pond_especial_user=$4
+       WHERE id_fecha_especial=$5`,
       [nombre||'', fecha_inicio, fecha_fin, pond_user||'Medio', req.params.id]
     );
+    await recalcularYGuardarCalendario();
     res.json({ status: "ok" });
-    triggerRecalculo();
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 app.delete("/periodos-especiales/:id", async (req, res) => {
   try {
-    await pool.query("DELETE FROM periodos_especiales WHERE id=$1", [req.params.id]);
+    await pool.query("DELETE FROM fechas_especiales WHERE id_fecha_especial=$1", [req.params.id]);
+    await recalcularYGuardarCalendario();
     res.json({ status: "ok" });
-    triggerRecalculo();
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -258,8 +252,8 @@ app.put("/pesos-usuario", async (req, res) => {
     const col = colMap[key];
     if (!col) return res.status(400).json({ error: "Clave inválida" });
     await pool.query(`UPDATE configuracion_pesos_reglas SET ${col}=$1`, [value]);
+    await recalcularYGuardarCalendario();
     res.json({ status: "ok" });
-    triggerRecalculo();
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -296,8 +290,8 @@ app.post("/reservaciones", async (req, res) => {
        VALUES ($1, $2, 'confirmado', $3) RETURNING *`,
       [fecha_evento, precio_final, nombre_cliente||"Cliente Gala"]
     );
+    await recalcularYGuardarCalendario();
     res.json({ mensaje: "Reservación guardada", reservacion: r.rows[0] });
-    triggerRecalculo();
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -307,8 +301,8 @@ app.delete("/reservaciones/:id", async (req, res) => {
       "UPDATE reservaciones SET status='cancelado' WHERE id_reservation=$1",
       [req.params.id]
     );
+    await recalcularYGuardarCalendario();
     res.json({ status: "ok" });
-    triggerRecalculo();
   } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
