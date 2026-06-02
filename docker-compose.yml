@@ -6,7 +6,7 @@ services:
     build: ./backend
     container_name: ziba_backend
     environment:
-      - DB_HOST=10.207.64.75
+      - DB_HOST=10.207.64.123
     ports:
       - "3000:3000"
     restart: unless-stopped

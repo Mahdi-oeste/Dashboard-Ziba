@@ -42,10 +42,10 @@ async function calcularPreciosEstadisticos(fechaInicio, fechaFin) {
   console.log(`🔄 computo_calendario: calculando ${fechaInicio} → ${fechaFin}`);
 
   // 1. Leer todas las tablas (cada una con fallback seguro)
-  const [rDias, rMeses, rConfig, rEspeciales, rReservas] = await Promise.all([
+  const [rDias, rMeses, rTablas, rEspeciales, rReservas] = await Promise.all([
     safeQuery("SELECT id_day, pond_day_user FROM ponderacion_dias"),
     safeQuery("SELECT id_month, pond_month_user FROM ponderacion_meses"),
-    safeQuery("SELECT * FROM configuracion_pesos_reglas LIMIT 1"),
+    safeQuery("SELECT id_table, pond_table_user FROM ponderacion_tablas ORDER BY id_table"),
     safeQuery(`
       SELECT TO_CHAR(fecha_inicio,'YYYY-MM-DD') AS fi,
              TO_CHAR(fecha_fin,   'YYYY-MM-DD') AS ff,
@@ -54,13 +54,13 @@ async function calcularPreciosEstadisticos(fechaInicio, fechaFin) {
     `),
     safeQuery(`
       SELECT TO_CHAR(date_start,'YYYY-MM-DD') AS fecha, price
-      FROM reservaciones WHERE status = 'confirmado'
+      FROM reservations WHERE status = 'confirmado'
     `)
   ]);
 
   console.log(`   ponderacion_dias:    ${rDias.length} filas`);
   console.log(`   ponderacion_meses:   ${rMeses.length} filas`);
-  console.log(`   configuracion:       ${rConfig.length} filas`);
+  console.log(`   ponderacion_tablas:  ${rTablas.length} filas`);
   console.log(`   fechas_especiales:   ${rEspeciales.length} filas`);
   console.log(`   reservaciones:       ${rReservas.length} filas`);
 
@@ -71,10 +71,13 @@ async function calcularPreciosEstadisticos(fechaInicio, fechaFin) {
   const pondMeses = {};
   rMeses.forEach(r => { pondMeses[r.id_month] = r.pond_month_user; });
 
-  const cfg    = rConfig[0] || {};
-  const infDias  = etiquetaAMult(cfg.peso_dias_user              || "Medio");
-  const infMeses = etiquetaAMult(cfg.peso_meses_user             || "Medio");
-  const infEsp   = etiquetaAMult(cfg.peso_fechas_especiales_user || "Medio");
+  // id_table: 0 = ponderacion_dias, 1 = ponderacion_meses, 2 = fechas_especiales, 3 = reservaciones
+  const pondTablas = {};
+  rTablas.forEach(r => { pondTablas[r.id_table] = r.pond_table_user; });
+
+  const infDias  = etiquetaAMult(pondTablas[0] || "Medio");
+  const infMeses = etiquetaAMult(pondTablas[1] || "Medio");
+  const infEsp   = etiquetaAMult(pondTablas[2] || "Medio");
 
   const mapaEsp = {};
   rEspeciales.forEach(fe => {
