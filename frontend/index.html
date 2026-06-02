@@ -18,16 +18,7 @@
     }
   </script>
   <link rel="stylesheet" href="styles.css" />
-  <script>
-    function Keycloak() {
-      return {
-        authenticated: false,
-        idTokenParsed: null,
-        init: () => Promise.resolve(true),
-        logout: (opts) => { window.location.href = opts?.redirectUri || '/'; }
-      };
-    }
-  </script>
+  <script src="https://auth.oeste.mx/js/keycloak.js"></script>
 </head>
 <body class="min-h-screen overflow-x-hidden">
 
