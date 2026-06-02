@@ -3,9 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Ziba Dashboard</title>
+  <title>Calendario</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#F4981B',
+            'ai-blue': '#1A73E8',
+          }
+        }
+      }
+    }
+  </script>
   <link rel="stylesheet" href="styles.css" />
-  <!-- KEYCLOAK MOCK — reemplazar con el script real cuando auth.oeste.mx esté listo -->
   <script>
     function Keycloak() {
       return {
@@ -17,35 +29,81 @@
     }
   </script>
 </head>
-<body>
+<body class="min-h-screen overflow-x-hidden">
 
-  <aside class="sidebar">
-    <div class="sidebar-logo">
-      <div class="logo-circle">
-        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="lucid-leaf-icon">
-          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8a7 7 0 0 1-9 8.2z"></path>
-          <path d="M19 2c-2.26 4.33-5.27 7.14-8 10"></path>
+  <!-- Mobile sidebar overlay -->
+  <div id="sidebarOverlay" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden" onclick="toggleSidebar()"></div>
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="-translate-x-full lg:translate-x-0 transition-transform duration-300 fixed top-0 left-0 h-screen w-64 bg-white border-r border-primary/20 flex flex-col z-50 px-5 py-6">
+
+    <div class="flex items-center gap-3 mb-10 px-1">
+      <div class="w-11 h-11 rounded-xl bg-primary text-white flex items-center justify-center flex-shrink-0" style="box-shadow:0 4px 10px rgba(244,152,27,0.35)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.5 1 9.8a7 7 0 0 1-9 8.2z"/>
+          <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>
         </svg>
       </div>
       <div>
-        <h2>JARDÍN ZIBÁ</h2>
+        <h2 class="text-[1.05rem] font-bold leading-tight text-black">Jardín Zibá</h2>
+        <p class="text-[0.75rem] text-black font-medium leading-tight mt-0.5">Jardín de eventos</p>
       </div>
     </div>
 
-    <div class="sidebar-section">
-      <span class="sidebar-title">NAVEGACIÓN</span>
-      <a href="#topbar" class="sidebar-link active">Dashboard</a>
+    <div class="flex flex-col gap-1 flex-1">
+      <a href="#topbar" class="flex items-center gap-3 px-3 py-2.5 bg-primary text-white font-semibold text-[0.95rem] rounded-xl no-underline transition-colors hover:bg-primary/90" style="box-shadow:0 4px 12px rgba(244,152,27,0.2)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="flex-shrink-0">
+          <path d="M8 2v4"/><path d="M16 2v4"/>
+          <rect width="18" height="18" x="3" y="4" rx="2"/>
+          <path d="M3 10h18"/>
+          <path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/>
+          <path d="M8 18h.01"/><path d="M12 18h.01"/><path d="M16 18h.01"/>
+        </svg>
+        Calendario
+      </a>
     </div>
+
+    <a
+      href="https://oesteinvestgroup.com"
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label="Oeste Invest Group - visitar sitio"
+      title="Visitar oesteinvestgroup.com"
+      class="block group no-underline">
+      <div class="flex items-center gap-2 pt-3 border-t border-primary/20">
+        <img
+          src="/assets/oeste-logo.svg"
+          alt="oeste"
+          class="w-9 h-9 flex-shrink-0 transition-transform group-hover:scale-105"
+          onerror="this.style.display='none'"
+        />
+        <div class="min-w-0 leading-tight">
+          <div class="text-xs font-semibold text-black truncate transition-colors group-hover:text-primary">
+            Organización de Estudios
+          </div>
+          <div class="text-xs font-semibold text-black truncate transition-colors group-hover:text-primary">
+            del Territorio
+          </div>
+        </div>
+      </div>
+    </a>
 
   </aside>
 
-  <main class="main-content">
-      
-    <header class="topbar" id="topbar">
-      <div>
-        <h1>Reservaciones</h1>
+  <!-- Main content -->
+  <main class="lg:ml-64 px-5 py-6 lg:px-10 lg:py-10 flex flex-col gap-8 min-h-screen" style="transition: margin-left 0.3s">
+
+    <!-- Topbar -->
+    <header class="flex justify-between items-center w-full" id="topbar">
+      <div class="flex items-center gap-3">
+        <button onclick="toggleSidebar()" class="lg:hidden p-2 rounded-xl text-gray-600 hover:bg-gray-100 transition-colors" aria-label="Menú">
+          <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+        <h1 class="text-[21.33px] font-bold text-black">Reservaciones</h1>
       </div>
-      
+
       <div class="perfil-dropdown-wrapper" id="perfilDropdownTrigger">
         <div class="perfil-avatar-btn">
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="user-avatar-icon">
@@ -54,10 +112,9 @@
           </svg>
           <span id="txtNombreUsuarioTopbar">Cargando...</span>
         </div>
-        
         <div class="perfil-dropdown-menu" id="perfilDropdownMenu">
           <button id="logoutBtn" class="dropdown-logout-action-btn">
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -68,189 +125,153 @@
       </div>
     </header>
 
-    <!-- ================================================================
-         NUEVA TABLA: PESOS DEL USUARIO (arriba de todo)
-         ================================================================ -->
-    <section class="pesos-usuario-section">
-      <div class="indicador-box visual-split-box pesos-usuario-box">
-        <div class="block-header-inline">
-          <h3>Ponderaciones</h3>
-        </div>
+    <!-- Importancia + Gráfica -->
+    <section class="flex flex-col lg:flex-row gap-6 items-stretch">
 
-        <div class="table-subpanel" style="margin-top: 15px;">
+      <div class="card pesos-usuario-box bg-white rounded-[18px] border border-gray-100 p-6 flex flex-col lg:flex-[1.3]" style="box-shadow:0 4px 12px rgba(0,0,0,0.03)">
+        <div class="flex justify-between items-center">
+          <h3 class="text-[18.66px] font-bold text-black">Importancia</h3>
+        </div>
+        <div class="mt-4 overflow-x-auto bg-[#FAFBFB] border border-gray-100 rounded-xl p-3.5">
           <table class="tabla-demanda table-editable">
             <thead>
               <tr>
-                <th>Factor de Ponderación</th>
-                <th>Prioridad usuario</th>
+                <th>Ponderación</th>
+                <th>Usuario</th>
+                <th class="th-ia">IA</th>
               </tr>
             </thead>
             <tbody id="tbodyPesosUsuario">
               <tr>
-                <td><strong>Ponderación por día de la semana</strong></td>
+                <td>Día</td>
                 <td>
                   <select class="select-peso-usuario select-mes-cell medio" data-peso-key="dias" onchange="actualizarPesoUsuario(this)">
-                    <option value="Muy alto">Muy Alto</option>
-                    <option value="Alto">Alto</option>
-                    <option value="Medio" selected>Medio</option>
-                    <option value="Bajo">Bajo</option>
+                    <option value="Muy alto">Muy Alto</option><option value="Alto">Alto</option>
+                    <option value="Medio" selected>Medio</option><option value="Bajo">Bajo</option>
                     <option value="Muy bajo">Muy Bajo</option>
                   </select>
                 </td>
+                <td class="td-ia"><div class="contenedor-badge-ia medio" id="ia-badge-dias">Medio</div></td>
               </tr>
               <tr>
-                <td><strong>Ponderación por mes</strong></td>
+                <td>Mes</td>
                 <td>
                   <select class="select-peso-usuario select-mes-cell medio" data-peso-key="mes" onchange="actualizarPesoUsuario(this)">
-                    <option value="Muy alto">Muy Alto</option>
-                    <option value="Alto">Alto</option>
-                    <option value="Medio" selected>Medio</option>
-                    <option value="Bajo">Bajo</option>
+                    <option value="Muy alto">Muy Alto</option><option value="Alto">Alto</option>
+                    <option value="Medio" selected>Medio</option><option value="Bajo">Bajo</option>
                     <option value="Muy bajo">Muy Bajo</option>
                   </select>
                 </td>
+                <td class="td-ia"><div class="contenedor-badge-ia medio" id="ia-badge-mes">Medio</div></td>
               </tr>
               <tr>
-                <td><strong>Ponderación de Fechas Especiales</strong></td>
+                <td>Fechas Especiales</td>
                 <td>
                   <select class="select-peso-usuario select-mes-cell medio" data-peso-key="fechas_especiales" onchange="actualizarPesoUsuario(this)">
-                    <option value="Muy alto">Muy Alto</option>
-                    <option value="Alto">Alto</option>
-                    <option value="Medio" selected>Medio</option>
-                    <option value="Bajo">Bajo</option>
+                    <option value="Muy alto">Muy Alto</option><option value="Alto">Alto</option>
+                    <option value="Medio" selected>Medio</option><option value="Bajo">Bajo</option>
                     <option value="Muy bajo">Muy Bajo</option>
                   </select>
                 </td>
+                <td class="td-ia"><div class="contenedor-badge-ia medio" id="ia-badge-fechas_especiales">Medio</div></td>
               </tr>
               <tr>
-                <td><strong>Fechas Reservadas</strong></td>
+                <td>Reservas</td>
                 <td>
                   <select class="select-peso-usuario select-mes-cell medio" data-peso-key="fechas_reservadas" onchange="actualizarPesoUsuario(this)">
-                    <option value="Muy alto">Muy Alto</option>
-                    <option value="Alto">Alto</option>
-                    <option value="Medio" selected>Medio</option>
-                    <option value="Bajo">Bajo</option>
+                    <option value="Muy alto">Muy Alto</option><option value="Alto">Alto</option>
+                    <option value="Medio" selected>Medio</option><option value="Bajo">Bajo</option>
                     <option value="Muy bajo">Muy Bajo</option>
                   </select>
                 </td>
+                <td class="td-ia"><div class="contenedor-badge-ia medio" id="ia-badge-fechas_reservadas">Medio</div></td>
               </tr>
             </tbody>
           </table>
         </div>
       </div>
+
+      <div class="card bg-white rounded-[18px] border border-gray-100 p-6 flex flex-col flex-1" style="box-shadow:0 4px 12px rgba(0,0,0,0.03)">
+        <h2 class="text-[18.66px] font-bold text-black mb-5">Ocupación 2026-2027</h2>
+        <div id="chartBars" class="chart-bars"></div>
+        <div id="chartLabels" style="display:flex; justify-content:space-between; margin-top:6px;"></div>
+      </div>
     </section>
 
-    <!-- ================================================================
-         TRES TABLAS ORIGINALES
-         ================================================================ -->
-    <section class="indicadores-container">
-      
-      <div class="indicador-box visual-split-box">
-        <div class="block-header-inline">
-          <h3>Ponderación por día de la semana </h3>
-        </div>
-        
-        <div class="table-subpanel" style="margin-top: 15px;">
+    <!-- 3 tablas -->
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[1fr_1fr_1.5fr] gap-5">
+
+      <div class="card bg-white rounded-[18px] border border-gray-100 p-6 flex flex-col" style="box-shadow:0 4px 12px rgba(0,0,0,0.03)">
+        <h3 class="text-[18.66px] font-bold text-black">Ponderación por Día</h3>
+        <div class="mt-4 overflow-x-auto bg-[#FAFBFB] border border-gray-100 rounded-xl p-3.5">
           <table class="tabla-demanda table-editable">
-            <thead>
-              <tr>
-                <th>Día</th>
-                <th>Usuario</th>
-                <th>IA</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Día</th><th>Usuario</th><th>IA</th></tr></thead>
             <tbody id="tbodyDiasBase"></tbody>
           </table>
         </div>
       </div>
 
-
-      <div class="indicador-box visual-split-box">
-        <div class="block-header-inline">
-          <h3>Ponderación por mes</h3>
-        </div>
-
-        <div class="table-subpanel" style="margin-top: 15px;">
+      <div class="card bg-white rounded-[18px] border border-gray-100 p-6 flex flex-col" style="box-shadow:0 4px 12px rgba(0,0,0,0.03)">
+        <h3 class="text-[18.66px] font-bold text-black">Ponderación por Mes</h3>
+        <div class="mt-4 overflow-x-auto bg-[#FAFBFB] border border-gray-100 rounded-xl p-3.5">
           <table class="tabla-demanda table-editable">
-            <thead>
-              <tr>
-                <th>Mes</th>
-                <th>Usuario</th>
-                <th>IA</th>
-              </tr>
-            </thead>
+            <thead><tr><th>Mes</th><th>Usuario</th><th>IA</th></tr></thead>
             <tbody id="tbodyMesesBase"></tbody>
           </table>
         </div>
       </div>
 
-      <div class="indicador-box visual-split-box">
-        <div class="block-header-inline">
-          <h3>Ponderación de Fechas Especiales</h3>
-        </div>
-
-        <div class="table-subpanel" style="margin-top: 15px;">
-          <table class="tabla-demanda table-editable">
+      <div class="card bg-white rounded-[18px] border border-gray-100 p-6 flex flex-col md:col-span-2 lg:col-span-1" style="box-shadow:0 4px 12px rgba(0,0,0,0.03)">
+        <h3 class="text-[18.66px] font-bold text-black">Ponderación de Fechas Especiales</h3>
+        <div class="mt-4 overflow-x-auto bg-[#FAFBFB] border border-gray-100 rounded-xl p-3.5">
+          <table class="tabla-demanda table-editable tabla-fechas-especiales">
             <thead>
               <tr>
                 <th>Nombre / Rango de Fechas</th>
-                <th style="text-align: center;">USUARIO</th>
-                <th style="text-align: center;">IA</th>
-                <th style="text-align: center;"></th>
+                <th style="text-align:center">Usuario</th>
+                <th style="text-align:center">IA</th>
+                <th style="text-align:center"></th>
               </tr>
             </thead>
-            <tbody id="tbodyPeriodosEspeciales">
-              <!-- Renderizado dinámico desde script.js -->
-            </tbody>
+            <tbody id="tbodyPeriodosEspeciales"></tbody>
           </table>
         </div>
       </div>
 
     </section>
 
-    <section class="kpi-chart-row">
-      <div class="dashboard">
-        <div class="dashboard-card">
-          <span>Reservaciones totales 2026-2027</span>
-          <h3 id="kpiReservaciones">0</h3>
-        </div>
-        <div class="dashboard-card highlight">
-          <span>Ingresos totales 2026-2027</span>
-          <h3 id="kpiIngreso">$0</h3>
-        </div>
-        <div class="dashboard-card">
-          <span>Porcentaje de ocupación total 2026-2027</span>
-          <h3 id="kpiOcupacion">0%</h3>
-        </div>
-        <div class="dashboard-card">
-          <span>Rango de Tarifas de los eventos contratados 2026-2027</span>
-          <h3 id="kpiPrecio">Minino: $300,000.00 M.N.</h3>
-          <h3 id="kpiPrecio">Medio: $500,000.00 M.N.</h3>
-          <h3 id="kpiPrecio">Máximo: $700,000.00 M.N.</h3>
-        </div>
+    <!-- KPIs -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="card bg-white rounded-[18px] border border-gray-100 p-6 flex flex-col" style="box-shadow:0 4px 12px rgba(0,0,0,0.03)">
+        <span class="text-[1.2rem] text-gray-500 font-bold leading-snug">Porcentaje De Ocupación 2026-2027</span>
+        <h3 class="text-2xl font-bold text-[#1E2022] mt-1" id="kpiOcupacion">0%</h3>
       </div>
-
-      <div class="chart-card">
-        <h2>Ocupación 2026-2027</h2>
-        <div id="chartBars" class="chart-bars"></div>
+      <div class="card bg-white rounded-[18px] border border-gray-100 p-6 flex flex-col" style="box-shadow:0 4px 12px rgba(0,0,0,0.03)">
+        <span class="text-[1.2rem] text-gray-500 font-bold leading-snug">Reservaciones Totales 2026-2027</span>
+        <h3 class="text-2xl font-bold text-[#1E2022] mt-1" id="kpiReservaciones">0</h3>
+      </div>
+      <div class="card bg-white rounded-[18px] border border-gray-100 p-6 flex flex-col" style="box-shadow:0 4px 12px rgba(0,0,0,0.03)">
+        <span class="text-[1.2rem] text-gray-500 font-bold leading-snug">Rango de Tarifas 2026-2027</span>
+        <h3 class="text-2xl font-bold text-[#1E2022] mt-1" id="kpiRangoTarifas">Cargando...</h3>
+      </div>
+      <div class="card bg-white rounded-[18px] border border-gray-100 p-6 flex flex-col" style="box-shadow:0 4px 12px rgba(0,0,0,0.03)">
+        <span class="text-[1.2rem] text-gray-500 font-bold leading-snug">Ingresos Totales 2026-2027</span>
+        <h3 class="text-2xl font-bold text-[#1E2022] mt-1" id="kpiIngreso">$0</h3>
       </div>
     </section>
 
-    <div class="analytics-wrapper">
-      
-      <section class="calendar-section" id="calendario">
-        <div class="calendar-header-wrapper">
-          <div class="calendar-header-text">
-            <h2 id="calendarMonthTitle">Calendario</h2>
-          </div>
-          
-          <div class="calendar-controls">
+    <!-- Calendario -->
+    <div>
+      <section class="card bg-white rounded-[18px] border border-gray-100 p-6 lg:p-8" id="calendario" style="box-shadow:0 4px 12px rgba(0,0,0,0.03)">
+
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5">
+          <h2 class="text-[18.66px] font-bold text-black" id="calendarMonthTitle">Calendario</h2>
+          <div class="flex items-center gap-4 flex-wrap">
             <div class="month-navigation-wrapper">
               <button class="month-arrow-btn" onclick="navegarMes(-1)">❮</button>
               <select id="monthSelector" class="premium-select" onchange="actualizarCalendarioPorSelectores()"></select>
               <button class="month-arrow-btn" onclick="navegarMes(1)">❯</button>
             </div>
-            
             <div class="year-selector">
               <button class="year-btn" onclick="navegarAnioBoton(-1)">-</button>
               <select id="yearSelector" class="premium-select" onchange="actualizarCalendarioPorSelectores()"></select>
@@ -258,60 +279,122 @@
             </div>
           </div>
         </div>
-        
-        <div class="legend">
-          <span style="font-size: 0.9rem; margin-right: 4px;">📌</span>
-          <span class="legend-description">Esquema visual de celdas:</span>
-          <div class="legend-item"><div class="legend-box-color color-libre"></div> Fecha Disponible </div>
-          <div class="legend-item"><div class="legend-box-color color-ocupado"></div> Fecha Reservada </div>
-          <div class="legend-item"><span style="color: var(--ai-blue); font-weight: bold;">IA:</span> Tarifa IA </div>
-          <div class="legend-item"><span style="color: #FF4D4D; font-weight: bold;">U:</span> Tarifa del usuario</div>
-        </div>
-        
-        <div id="singleCalendarContainer" class="single-calendar-container"></div>
-      </section>
 
+        <div class="overflow-x-auto">
+          <div id="singleCalendarContainer" class="single-calendar-container"></div>
+          <div class="legend">
+          <div class="legend-item">
+            <div class="legend-chip legend-chip-libre"></div>
+            <span>Fecha Disponible</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-chip" style="background:var(--cal-ocupado-bg); border:1px solid var(--cal-ocupado-border);"></div>
+            <span>Fecha Reservada</span>
+          </div>
+          <div class="legend-item legend-separator">
+            <span class="legend-label-user">Usuario:</span>
+            <span>Precio Calculado</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-label-ia">IA:</span>
+            <span>Precio Sugerido</span>
+          </div>
+        </div>
+        </div>
+      </section>
     </div>
+
   </main>
 
-  <!-- ================================================================
-       MODAL DE RESERVACIÓN
-       ================================================================ -->
+  <!-- Modal -->
   <div id="modalReservacion" class="modal-overlay" style="display:none;">
     <div class="modal-card">
       <button class="modal-close-btn" onclick="cerrarModalReservacion()">✕</button>
-
-      <!-- VISTA: AGREGAR RESERVACIÓN (día libre) -->
       <div id="modalVistaAgregar">
         <h3 class="modal-title">📅 Nueva Reservación</h3>
         <p id="modalFechaLabel" class="modal-fecha"></p>
         <div class="modal-field">
           <label>Nombre del cliente</label>
-          <input type="text" id="inputNombreCliente" class="input-table-cell" placeholder="Ej. Familia García" style="width:100%;">
+          <input type="text" id="inputNombreCliente" class="input-table-cell" placeholder="Ej. Familia García" style="width:100%">
         </div>
         <div class="modal-field">
-          <label>Precio final <span style="color:var(--text-muted); font-size:0.8rem;">(MXN)</span></label>
-          <input type="number" id="inputPrecioFinal" class="input-table-cell" min="0" step="1000" style="width:100%;">
+          <label>Precio final <span style="color:var(--text-muted);font-size:0.8rem">(MXN)</span></label>
+          <input type="number" id="inputPrecioFinal" class="input-table-cell" min="0" step="1000" style="width:100%">
         </div>
         <div class="modal-field">
-          <label style="color:var(--text-muted); font-size:0.8rem;">Precio sugerido IA</label>
-          <p id="modalPrecioIA" style="font-weight:700; color:var(--ai-blue); margin:4px 0 0;"></p>
+          <label style="color:var(--text-muted);font-size:0.8rem">Precio sugerido IA</label>
+          <p id="modalPrecioIA" style="font-weight:700;color:var(--ai-blue);margin:4px 0 0"></p>
+        </div>
+        <div class="modal-field">
+          <label>Nombre contacto principal</label>
+          <input type="text" id="inputContactName" class="input-table-cell" placeholder="Ej. Juan García" style="width:100%">
+        </div>
+        <div class="modal-field">
+          <label>Teléfono contacto principal</label>
+          <input type="tel" id="inputContactPhone" class="input-table-cell" placeholder="Ej. +52 55 1234 5678" style="width:100%">
+        </div>
+        <div class="modal-field">
+          <label>Email contacto principal</label>
+          <input type="email" id="inputContactEmail" class="input-table-cell" placeholder="Ej. juan@email.com" style="width:100%">
+        </div>
+        <div class="modal-field">
+          <label>Notas</label>
+          <input type="text" id="inputClientNotes" class="input-table-cell" placeholder="Observaciones opcionales" style="width:100%">
         </div>
         <div class="modal-actions">
           <button class="btn-modal-cancelar" onclick="cerrarModalReservacion()">Cancelar</button>
           <button class="btn-modal-confirmar" onclick="confirmarReservacion()">✔ Confirmar Reservación</button>
         </div>
       </div>
-
-      <!-- VISTA: DETALLE RESERVACIÓN (día ocupado) -->
-      <div id="modalVistaDetalle" style="display:none;">
+      <div id="modalVistaDetalle" style="display:none">
         <h3 class="modal-title">📌 Reservación Confirmada</h3>
         <p id="modalDetalleFecha" class="modal-fecha"></p>
-        <div class="modal-detail-row"><span>Cliente</span><strong id="modalDetalleCliente"></strong></div>
-        <div class="modal-detail-row"><span>Precio</span><strong id="modalDetallePrecio" style="color:#27ae60;"></strong></div>
-        <div class="modal-detail-row"><span>ID</span><strong id="modalDetalleId" style="color:var(--text-muted);"></strong></div>
+
+        <!-- Read-only -->
+        <div class="modal-detail-row">
+          <span>ID</span>
+          <strong id="modalDetalleId" style="color:var(--text-muted)"></strong>
+        </div>
+
+        <!-- Editable fields -->
+        <div class="modal-field">
+          <label>Cliente</label>
+          <input type="text" id="editDetalleCliente" class="input-table-cell" placeholder="Nombre del cliente" style="width:100%">
+        </div>
+        <div class="modal-field">
+          <label>Precio final <span style="color:var(--text-muted);font-size:0.8rem">(MXN)</span></label>
+          <input type="number" id="editDetallePrecio" class="input-table-cell" min="0" step="1000" style="width:100%">
+        </div>
+        <div class="modal-field">
+          <label>Contacto principal</label>
+          <input type="text" id="editDetalleContacto" class="input-table-cell" placeholder="Nombre del contacto" style="width:100%">
+        </div>
+        <div class="modal-field">
+          <label>Teléfono</label>
+          <input type="tel" id="editDetalleTelefono" class="input-table-cell" placeholder="Ej. +52 55 1234 5678" style="width:100%">
+        </div>
+        <div class="modal-field">
+          <label>Email</label>
+          <input type="email" id="editDetalleEmail" class="input-table-cell" placeholder="correo@ejemplo.com" style="width:100%">
+        </div>
+        <div class="modal-field">
+          <label>Notas</label>
+          <input type="text" id="editDetalleNotas" class="input-table-cell" placeholder="Observaciones opcionales" style="width:100%">
+        </div>
+
+        <!-- Read-only -->
+        <div class="modal-detail-row">
+          <span>Registrada</span>
+          <strong id="modalDetalleRegistro" style="color:var(--text-muted)"></strong>
+        </div>
+
+        <div id="modalDetalleLoading" style="text-align:center; padding:12px 0; color:var(--text-muted); font-size:0.85rem; display:none">
+          Cargando datos...
+        </div>
+
         <div class="modal-actions">
           <button class="btn-modal-cancelar" onclick="cerrarModalReservacion()">Cerrar</button>
+          <button class="btn-modal-confirmar" id="btnGuardarDetalle" onclick="guardarDetalleReservacion()">💾 Guardar</button>
           <button class="btn-modal-eliminar" onclick="eliminarReservacion()">✕ Cancelar Reservación</button>
         </div>
       </div>

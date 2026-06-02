@@ -128,7 +128,18 @@ async function iniciarDashboard() {
   // Carga inicial conectando con el Backend Relacional
   await cargarEstrategiaMesCompletoConIA(false);
   await cargarPeriodosEspeciales();
+  await cargarKPIs();
   generarGraficaHistoricaOcupacion();
+
+  // SSE — recarga el calendario automáticamente cuando el backend recalcula precios
+  const _sse = new EventSource('/api/eventos');
+  _sse.addEventListener('calendario_actualizado', () => {
+    cargarEstrategiaMesCompletoConIA(true);
+    cargarKPIs();
+  });
+  _sse.onerror = () => {
+    console.warn('SSE: reconectando...');
+  };
 }
 
 /* ==========================================================================
@@ -144,13 +155,7 @@ const mapaClasesPesos = {
   "Alto":      "high",
   "Medio":     "medio",
   "Bajo":      "low",
-  "Muy bajo":  "very-low",
-  // aliases para compatibilidad con tabla de meses
-  "Muy alta":  "very-high",
-  "Alta":      "high",
-  "Media":     "medio",
-  "Baja":      "low",
-  "Muy baja":  "very-low"
+  "Muy bajo":  "very-low"
 };
 
 /**
@@ -162,14 +167,28 @@ async function cargarPesosUsuario() {
     const response = await fetch("/api/pesos-usuario");
     if (response.ok) {
       const data = await response.json();
-      // Fusionar con valores por defecto si el backend devuelve datos parciales
       pesosUsuario = { ...pesosUsuario, ...data };
+
+      // Actualizar badges IA de la tabla Ponderaciones
+      const iaBadges = {
+        dias:              data.dias_ia,
+        mes:               data.mes_ia,
+        fechas_especiales: data.fechas_especiales_ia,
+        fechas_reservadas: data.fechas_reservadas_ia
+      };
+      Object.entries(iaBadges).forEach(([key, val]) => {
+        const badge = document.getElementById(`ia-badge-${key}`);
+        if (badge && val) {
+          const clase = mapaClasesPesos[val] || "medio";
+          badge.className = `contenedor-badge-ia ${clase}`;
+          badge.innerText = val;
+        }
+      });
     }
   } catch (error) {
     console.warn("ℹ️ No se pudieron cargar los pesos del usuario desde el backend. Usando valores por defecto.", error);
   }
 
-  // Sincronizar la UI con los valores cargados (o por defecto)
   sincronizarSelectoresPesosUsuario();
 }
 
@@ -201,7 +220,7 @@ async function actualizarPesoUsuario(selectEl) {
   pesosUsuario[key] = val;
 
   // 2. Reactividad visual inmediata: cambiar clase semáforo
-  selectEl.className = "select-peso-usuario " + (mapaClasesPesos[val] || "medio");
+  selectEl.className = "select-peso-usuario select-mes-cell " + (mapaClasesPesos[val] || "medio");
 
   // 3. Persistir en el backend (si está disponible)
   try {
@@ -213,9 +232,9 @@ async function actualizarPesoUsuario(selectEl) {
 
     if (response.ok) {
       console.log(`💾 Peso del usuario guardado: ${key} -> ${val}`);
+      await cargarEstrategiaMesCompletoConIA(true);
     }
   } catch (error) {
-    // En desarrollo local sin backend, solo loguear
     console.warn(`ℹ️ Backend no disponible. Peso registrado solo en memoria: ${key} -> ${val}`);
   }
 }
@@ -288,7 +307,7 @@ function renderizarConsolaParametros() {
       ).join('');
 
       tr.innerHTML = `
-        <td><strong>${nombresDiasCompletos[d]}</strong></td>
+        <td>${nombresDiasCompletos[d]}</td>
         <td>
           <select class="select-mes-cell ${claseUser}" data-day="${d}" onchange="actualizarPuntosDiaLocal(this)">
             ${optsHtml}
@@ -316,7 +335,7 @@ function renderizarConsolaParametros() {
       const claseColorIA = mapaClasesEstacionales[catIA] || "medio";
 
       tr.innerHTML = `
-        <td><strong>${m}</strong></td>
+        <td>${m}</td>
         <td>
           <select class="select-mes-cell ${claseColorUser}" data-month="${idx + 1}" onchange="actualizarEstacionalidadMesLocal(this)">
             <option value="Muy alta" ${catActual === 'Muy alta' ? 'selected' : ''}>Muy Alta </option>
@@ -361,11 +380,7 @@ async function actualizarEstacionalidadMesLocal(selectEl) {
       console.log(`💾 Guardado en Postgres: Mes ${monthId} -> ${val}`);
     }
 
-    if (monthId === (mesActual + 1)) {
-      await cargarEstrategiaMesCompletoConIA(true);
-    } else {
-      renderVisualOnly(); 
-    }
+    await cargarEstrategiaMesCompletoConIA(true);
   } catch (error) {
     console.error("Error al actualizar ponderación mensual:", error);
   }
@@ -404,6 +419,75 @@ function renderVisualOnly() {
 /* ==========================================================================
    6. RENDERIZACIÓN DEL CALENDARIO DINÁMICO & CÓMPUTO GLOBAL DE KPIS
    ========================================================================== */
+/* --------------------------------------------------------------------------
+   Convierte un color hex (#rrggbb) a [H, S%, L%].
+   -------------------------------------------------------------------------- */
+function hexToHsl(hex) {
+  hex = hex.trim().replace('#', '');
+  const r = parseInt(hex.slice(0, 2), 16) / 255;
+  const g = parseInt(hex.slice(2, 4), 16) / 255;
+  const b = parseInt(hex.slice(4, 6), 16) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b);
+  const d = max - min;
+  const l = (max + min) / 2;
+  let h = 0, s = 0;
+  if (d) {
+    s = d / (1 - Math.abs(2 * l - 1));
+    if      (max === r) h = ((g - b) / d + 6) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else                h = (r - g) / d + 4;
+    h *= 60;
+  }
+  return [h, s * 100, l * 100];
+}
+
+/* --------------------------------------------------------------------------
+   Interpola bg, border y text a lo largo del gradiente de precio.
+   Lee colores y textos directamente de las variables CSS --semaforo-* para
+   mantener una única fuente de verdad.
+   t = 0  →  semaforo-very-high (precio máximo del mes)
+   t = 1  →  semaforo-very-low  (precio mínimo del mes)
+   Se llama con (1 - t): mínimo = very-low, máximo = very-high.
+   Devuelve { bg, border, text, iaText }.
+   -------------------------------------------------------------------------- */
+function calcularColorGradiente(t) {
+  const cs = getComputedStyle(document.documentElement);
+  const semaforoNiveles = [
+    { bgVar: '--semaforo-very-high-bg', textVar: '--semaforo-very-high-text', iaTextVar: '--semaforo-very-high-ia-text', pos: 0.00 },
+    { bgVar: '--semaforo-high-bg',      textVar: '--semaforo-high-text',      iaTextVar: '--semaforo-high-ia-text',      pos: 0.25 },
+    { bgVar: '--semaforo-medio-bg',     textVar: '--semaforo-medio-text',     iaTextVar: '--semaforo-medio-ia-text',     pos: 0.50 },
+    { bgVar: '--semaforo-low-bg',       textVar: '--semaforo-low-text',       iaTextVar: '--semaforo-low-ia-text',       pos: 0.75 },
+    { bgVar: '--semaforo-very-low-bg',  textVar: '--semaforo-very-low-text',  iaTextVar: '--semaforo-very-low-ia-text',  pos: 1.00 },
+  ];
+
+  const stops = semaforoNiveles.map(({ bgVar, textVar, iaTextVar, pos }) => ({
+    pos,
+    hsl:    hexToHsl(cs.getPropertyValue(bgVar).trim()),
+    text:   cs.getPropertyValue(textVar).trim(),
+    iaText: cs.getPropertyValue(iaTextVar).trim(),
+  }));
+
+  t = Math.max(0, Math.min(1, t));
+  let i = 0;
+  while (i < stops.length - 2 && t > stops[i + 1].pos) i++;
+
+  const { pos: p0, hsl: [h0, s0, l0], text: text0, iaText: iaText0 } = stops[i];
+  const { pos: p1, hsl: [h1, s1, l1], text: text1, iaText: iaText1 } = stops[i + 1];
+  const lt = (p1 === p0) ? 0 : (t - p0) / (p1 - p0);
+
+  const h = h0 + (h1 - h0) * lt;
+  const s = s0 + (s1 - s0) * lt;
+  const l = l0 + (l1 - l0) * lt;
+  const nearestFirst = lt < 0.5;
+
+  return {
+    bg:     `hsla(${h.toFixed(1)}, ${s.toFixed(1)}%, ${l.toFixed(1)}%, 1)`,
+    border: `hsla(${h.toFixed(1)}, ${Math.min(100, s + 15).toFixed(1)}%, ${Math.max(0, l - 12).toFixed(1)}%, 1)`,
+    text:   nearestFirst ? text0   : text1,    // snap to nearest semaphore tier
+    iaText: nearestFirst ? iaText0 : iaText1,  // exclusive IA text color
+  };
+}
+
 async function renderizarCalendarioDinamico() {
   const calendarMonthTitle = document.getElementById("calendarMonthTitle");
   if (calendarMonthTitle) calendarMonthTitle.innerText = `${nombresMeses[mesActual]} ${anioActual}`;
@@ -423,8 +507,23 @@ async function renderizarCalendarioDinamico() {
     : [];
 
   const diaJS = new Date(anioActual, mesActual, 1).getDay();
-  const celdasVacias = diaJS === 0 ? 6 : diaJS - 1; 
+  const celdasVacias = diaJS === 0 ? 6 : diaJS - 1;
   const totalDiasMes = new Date(anioActual, mesActual + 1, 0).getDate();
+  const stringMes = String(mesActual + 1).padStart(2, '0');
+
+  // Pre-calcular min/max de precios computados de días libres para el gradiente
+  let minPrecioMes = Infinity, maxPrecioMes = -Infinity;
+  for (let d = 1; d <= totalDiasMes; d++) {
+    const f = `${anioActual}-${stringMes}-${String(d).padStart(2, '0')}`;
+    if (!estrategiaMesActualIA?.reservaciones_periodo?.[f]) {
+      const p = estrategiaMesActualIA?.precios_computados_calendario?.[f];
+      if (p != null) {
+        minPrecioMes = Math.min(minPrecioMes, p);
+        maxPrecioMes = Math.max(maxPrecioMes, p);
+      }
+    }
+  }
+  if (!isFinite(minPrecioMes)) minPrecioMes = maxPrecioMes = 400000;
 
   for (let i = 0; i < celdasVacias; i++) {
     const emptyCell = document.createElement("div"); emptyCell.className = "calendar-wrapper-empty";
@@ -432,7 +531,6 @@ async function renderizarCalendarioDinamico() {
   }
 
   for (let d = 1; d <= totalDiasMes; d++) {
-    const stringMes = String(mesActual + 1).padStart(2, '0');
     const fechaTextoIso = `${anioActual}-${stringMes}-${String(d).padStart(2, '0')}`;
 
     const reservaReal = estrategiaMesActualIA?.reservaciones_periodo?.[fechaTextoIso] || null;
@@ -452,20 +550,40 @@ async function renderizarCalendarioDinamico() {
 
     const dayElement = document.createElement("div");
     dayElement.className = `day ${estaOcupado ? 'ocupado' : 'libre'}`;
+
+    // Aplicar color de gradiente a días libres según precio relativo del mes
+    if (!estaOcupado && precioComputado !== null) {
+      const t = (minPrecioMes === maxPrecioMes)
+        ? 0.5
+        : (precioComputado - minPrecioMes) / (maxPrecioMes - minPrecioMes);
+      const { bg, border, text } = calcularColorGradiente(1 - t);
+      dayElement.style.setProperty('--cal-libre-bg',    bg);
+      dayElement.style.setProperty('--cal-libre-border', border);
+      dayElement.style.setProperty('--cal-libre-text',  text);   // día-número
+      dayElement.style.setProperty('--cal-user-price',  text);   // R: precio + "Usuario:" label
+
+      // IA price: exclusive --semaforo-*-ia-text color based on IA price relative to month range
+      const tIA = (minPrecioMes === maxPrecioMes)
+        ? 0.5
+        : (precioSugeridoIa - minPrecioMes) / (maxPrecioMes - minPrecioMes);
+      const { iaText } = calcularColorGradiente(1 - tIA);
+      dayElement.style.setProperty('--cal-ia-price', iaText);    // IA: precio + "IA:" label
+    }
     
     if (d === fechaActual.getDate() && mesActual === fechaActual.getMonth() && anioActual === fechaActual.getFullYear()) {
       dayElement.classList.add("today");
     }
 
-    const labelR = precioComputado !== null
+    const labelUsuario = precioComputado !== null
       ? '$' + (precioComputado / 1000).toFixed(0) + 'k'
       : '—';
+    const labelIA = '$' + (precioSugeridoIa / 1000).toFixed(0) + 'k';
 
     dayElement.innerHTML = `
       <span class="day-number">${d}</span>
       <div class="day-prices-container">
-        <div class="price-row ia-price"><span>S:</span>$${(precioSugeridoIa / 1000).toFixed(0)}k</div>
-        <div class="price-row real-price"><span>R:</span>${labelR}</div>
+        <div class="price-row user-price"><span>Usuario:</span>${labelUsuario}</div>
+        <div class="price-row ia-price"><span>IA:</span>${labelIA}</div>
       </div>
     `;
 
@@ -481,26 +599,59 @@ async function renderizarCalendarioDinamico() {
     container.appendChild(dayElement);
   }
 
-  /* ----------------------------------------------------------------------
-     📊 MOTOR DE ANALÍTICAS TOTALES E HISTÓRICAS (CÁLCULO DEL NEGOCIO REAL)
-     ---------------------------------------------------------------------- */
-  const totalReservacionesAbsoluto = reservacionesDB.length;
-  const ingresosGlobalesReales = reservacionesDB.reduce((acumulado, r) => acumulado + (parseFloat(r.precio_final) || 0), 0);
-  const porcentajeOcupacionAnual = ((totalReservacionesAbsoluto / 365) * 100).toFixed(1);
+}
 
-  if (document.getElementById("kpiReservaciones")) {
-    document.getElementById("kpiReservaciones").innerText = totalReservacionesAbsoluto;
-  }
-  
-  if (document.getElementById("kpiIngreso")) {
-    document.getElementById("kpiIngreso").innerText = `$${ingresosGlobalesReales.toLocaleString('es-MX', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
-    })} M.N.`;
-  }
-  
-  if (document.getElementById("kpiOcupacion")) {
-    document.getElementById("kpiOcupacion").innerText = `${porcentajeOcupacionAnual}%`;
+/* ==========================================================================
+   KPIs GLOBALES 2026-2027
+   ========================================================================== */
+async function cargarKPIs() {
+  try {
+    const res = await fetch('/api/reservaciones');
+    if (!res.ok) return;
+    const todas = await res.json();
+
+    const DIAS_PERIODO = 730; // 2026 + 2027 = 2 años
+
+    const total    = todas.length;
+    // Suma de ingresos
+    const ingresos = todas.reduce((sum, r) => sum + (parseFloat(r.precio_final) || 0), 0);
+    const ocupacion = ((total / DIAS_PERIODO) * 100).toFixed(1);
+
+    // 🏆 CALCULAR MÍNIMO Y MÁXIMO DE TARIFAS REALES
+    let minTarifa = 0;
+    let maxTarifa = 0;
+    // Extraemos solo los precios que sean números válidos y mayores a 0
+    const preciosValidos = todas.map(r => parseFloat(r.precio_final)).filter(p => !isNaN(p) && p > 0);
+    
+    if (preciosValidos.length > 0) {
+      minTarifa = Math.min(...preciosValidos);
+      maxTarifa = Math.max(...preciosValidos);
+    }
+
+    const elRes = document.getElementById("kpiReservaciones");
+    const elIng = document.getElementById("kpiIngreso");
+    const elOcu = document.getElementById("kpiOcupacion");
+    const elRango = document.getElementById("kpiRangoTarifas");
+
+    if (elRes) elRes.innerText = total;
+    
+    // Inyectamos el total con la clase .text-mn para hacerlo más pequeño
+    if (elIng) elIng.innerHTML = `$${ingresos.toLocaleString('es-MX', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span class="text-mn">M.N.</span>`;
+    
+    if (elOcu) elOcu.innerText = `${ocupacion}%`;
+    
+    // Inyectamos el rango dinámico en formato: $Min - $Max M.N.
+    if (elRango) {
+       if (preciosValidos.length > 0) {
+         // Se omiten los decimales (.00) en el rango para ahorrar espacio y que quepa en 1 sola línea
+         elRango.innerHTML = `$${minTarifa.toLocaleString('es-MX')} - $${maxTarifa.toLocaleString('es-MX')} <span class="text-mn">M.N.</span>`;
+       } else {
+         elRango.innerHTML = `$0 - $0 <span class="text-mn">M.N.</span>`;
+       }
+    }
+    
+  } catch (e) {
+    console.warn('No se pudieron cargar los KPIs globales.', e);
   }
 }
 
@@ -544,6 +695,12 @@ async function cargarPeriodosEspeciales() {
   }
 }
 
+const OPCIONES_POND = ["Muy alto", "Alto", "Medio", "Bajo", "Muy bajo"];
+const MAPA_POND_CLASE = {
+  "Muy alto": "very-high", "Alto": "high", "Medio": "medio",
+  "Bajo": "low", "Muy bajo": "very-low"
+};
+
 function renderizarPeriodosEspeciales(periodos) {
   const tbody = document.getElementById("tbodyPeriodosEspeciales");
   if (!tbody) return;
@@ -552,11 +709,19 @@ function renderizarPeriodosEspeciales(periodos) {
   periodos.forEach(p => {
     const tr = document.createElement("tr");
     tr.dataset.id = p.id;
-    const claseIA = obtenerClasePorScore(p.pond_ia);
+    const pondUser = p.pond_user || "Medio";
+    const pondIA   = p.pond_ia   || "Medio";
+    const claseUser = MAPA_POND_CLASE[pondUser] || "medio";
+    const claseIA   = MAPA_POND_CLASE[pondIA]   || "medio";
+
+    const optsHtml = OPCIONES_POND.map(o =>
+      `<option value="${o}" ${pondUser === o ? 'selected' : ''}>${o}</option>`
+    ).join('');
+
     tr.innerHTML = `
       <td>
         <input type="text" class="input-table-cell" placeholder="Nombre del período"
-               value="${p.nombre}" style="width:120px; margin-bottom:4px;"
+               value="${p.nombre}" style="width:100%; margin-bottom:4px;"
                onchange="actualizarCampoPeriodo(${p.id}, 'nombre', this.value)">
         <div class="rango-fecha-container">
           <input type="date" class="input-date-custom" value="${p.fecha_inicio}"
@@ -566,12 +731,14 @@ function renderizarPeriodosEspeciales(periodos) {
                  onchange="actualizarCampoPeriodo(${p.id}, 'fecha_fin', this.value)">
         </div>
       </td>
-      <td style="text-align:center; vertical-align:middle;">
-        <input type="number" class="input-table-cell" min="0" max="100" value="${p.pond_user}"
-               onchange="actualizarCampoPeriodo(${p.id}, 'pond_user', this.value)">
+      <td style="vertical-align:middle;">
+        <select class="select-mes-cell ${claseUser}"
+                onchange="actualizarCampoPeriodo(${p.id}, 'pond_user', this.value); this.className='select-mes-cell '+(MAPA_POND_CLASE[this.value]||'medio')">
+          ${optsHtml}
+        </select>
       </td>
       <td style="text-align:center; vertical-align:middle;">
-        <div class="contenedor-badge-ia ${claseIA}">${p.pond_ia}</div>
+        <div class="contenedor-badge-ia ${claseIA}">${pondIA}</div>
       </td>
       <td style="text-align:center; vertical-align:middle;">
         <button class="btn-eliminar-periodo" onclick="eliminarPeriodoEspecial(${p.id}, this)">✕</button>
@@ -591,13 +758,8 @@ function renderizarPeriodosEspeciales(periodos) {
   tbody.appendChild(trNuevo);
 }
 
-function obtenerClasePorScore(score) {
-  const n = parseFloat(score);
-  if (n >= 80) return "very-high";
-  if (n >= 60) return "high";
-  if (n >= 40) return "medio";
-  if (n >= 20) return "low";
-  return "very-low";
+function obtenerClasePorScore(label) {
+  return MAPA_POND_CLASE[label] || "medio";
 }
 
 async function agregarNuevoPeriodo() {
@@ -606,9 +768,14 @@ async function agregarNuevoPeriodo() {
     const res = await fetch("/api/periodos-especiales", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nombre: "", fecha_inicio: hoy, fecha_fin: hoy, pond_user: 50, pond_ia: 50 })
+      body: JSON.stringify({ nombre: "", fecha_inicio: hoy, fecha_fin: hoy, pond_user: "Medio", pond_ia: "Medio" })
     });
-    if (res.ok) await cargarPeriodosEspeciales();
+    if (res.ok) {
+      // Reload the table immediately so the new row is visible for editing
+      await cargarPeriodosEspeciales();
+      // Calendar recalculation runs in background via SSE — no need to await here
+      cargarEstrategiaMesCompletoConIA(true);
+    }
   } catch (e) {
     console.error("Error al agregar período especial.", e);
   }
@@ -618,18 +785,18 @@ async function actualizarCampoPeriodo(id, campo, valor) {
   // Leer el estado actual de la fila para enviar todos los campos en el PUT
   const tr = document.querySelector(`#tbodyPeriodosEspeciales tr[data-id="${id}"]`);
   if (!tr) return;
-  const inputs = tr.querySelectorAll("input");
+  const inputs  = tr.querySelectorAll("input");
+  const selects = tr.querySelectorAll("select");
   const nombre      = inputs[0].value;
   const fechaInicio = inputs[1].value;
   const fechaFin    = inputs[2].value;
-  const pondUser    = parseFloat(inputs[3].value) || 50;
+  const pondUser    = selects[0]?.value || "Medio";
 
-  // Sobrescribir el campo que acaba de cambiar
-  const payload = { nombre, fecha_inicio: fechaInicio, fecha_fin: fechaFin, pond_user: pondUser, pond_ia: 50 };
+  const payload = { nombre, fecha_inicio: fechaInicio, fecha_fin: fechaFin, pond_user: pondUser, pond_ia: "Medio" };
   if (campo === "nombre")       payload.nombre       = valor;
   if (campo === "fecha_inicio") payload.fecha_inicio = valor;
   if (campo === "fecha_fin")    payload.fecha_fin    = valor;
-  if (campo === "pond_user")    payload.pond_user    = parseFloat(valor) || 0;
+  if (campo === "pond_user")    payload.pond_user    = valor;
 
   try {
     await fetch(`/api/periodos-especiales/${id}`, {
@@ -647,6 +814,7 @@ async function eliminarPeriodoEspecial(id, btn) {
   try {
     await fetch(`/api/periodos-especiales/${id}`, { method: "DELETE" });
     await cargarPeriodosEspeciales();
+    await cargarEstrategiaMesCompletoConIA(true);
   } catch (e) {
     console.error("Error al eliminar período especial.", e);
     btn.disabled = false;
@@ -672,6 +840,10 @@ function abrirModalAgregar(fecha, precioIA) {
     `${parseInt(dia)} de ${nombresMeses[parseInt(mes) - 1]} de ${anio}`;
   document.getElementById('inputNombreCliente').value = '';
   document.getElementById('inputPrecioFinal').value = precioIA;
+  document.getElementById('inputContactName').value  = '';
+  document.getElementById('inputContactPhone').value = '';
+  document.getElementById('inputContactEmail').value = '';
+  document.getElementById('inputClientNotes').value  = '';
   document.getElementById('modalPrecioIA').innerText =
     `$${Number(precioIA).toLocaleString('es-MX')} MXN`;
 
@@ -681,22 +853,79 @@ function abrirModalAgregar(fecha, precioIA) {
   document.getElementById('inputNombreCliente').focus();
 }
 
-function abrirModalDetalle(reserva) {
-  _modalFechaActiva = reserva.fecha_evento;
+async function abrirModalDetalle(reserva) {
+  _modalFechaActiva  = reserva.fecha;
   _modalReservaActiva = reserva;
 
-  const [anio, mes, dia] = reserva.fecha_evento.split('-');
+  // Show modal immediately with basic data from the calendar payload
+  const [anio, mes, dia] = reserva.fecha.split('-');
   document.getElementById('modalDetalleFecha').innerText =
     `${parseInt(dia)} de ${nombresMeses[parseInt(mes) - 1]} de ${anio}`;
-  document.getElementById('modalDetalleCliente').innerText =
-    reserva.nombre_cliente || 'Cliente Gala';
-  document.getElementById('modalDetallePrecio').innerText =
-    `$${Number(reserva.precio_final).toLocaleString('es-MX')} MXN`;
-  document.getElementById('modalDetalleId').innerText = `#${reserva.id_reservation}`;
+  document.getElementById('modalDetalleId').innerText       = `#${reserva.id_reservation}`;
+  document.getElementById('editDetalleCliente').value       = reserva.nombre_cliente || '';
+  document.getElementById('editDetallePrecio').value        = reserva.precio_final   || '';
+  document.getElementById('editDetalleContacto').value      = '';
+  document.getElementById('editDetalleTelefono').value      = '';
+  document.getElementById('editDetalleEmail').value         = '';
+  document.getElementById('editDetalleNotas').value         = '';
+  document.getElementById('modalDetalleRegistro').innerText = '—';
+  document.getElementById('modalDetalleLoading').style.display = 'block';
+  document.getElementById('btnGuardarDetalle').disabled = true;
 
   document.getElementById('modalVistaAgregar').style.display = 'none';
   document.getElementById('modalVistaDetalle').style.display = 'block';
-  document.getElementById('modalReservacion').style.display = 'flex';
+  document.getElementById('modalReservacion').style.display  = 'flex';
+
+  // Fetch full details from the database and populate editable inputs
+  try {
+    const res  = await fetch(`/api/reservaciones/${reserva.id_reservation}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+
+    document.getElementById('editDetalleCliente').value       = data.nombre_cliente       || '';
+    document.getElementById('editDetallePrecio').value        = data.precio_final         || '';
+    document.getElementById('editDetalleContacto').value      = data.contacto_nombre      || '';
+    document.getElementById('editDetalleTelefono').value      = data.contacto_telefono    || '';
+    document.getElementById('editDetalleEmail').value         = data.contacto_email       || '';
+    document.getElementById('editDetalleNotas').value         = data.notas                || '';
+    document.getElementById('modalDetalleRegistro').innerText = data.fecha_registro       || '—';
+  } catch (err) {
+    console.warn('No se pudo cargar el detalle completo de la reservación:', err.message);
+  } finally {
+    document.getElementById('modalDetalleLoading').style.display = 'none';
+    document.getElementById('btnGuardarDetalle').disabled = false;
+  }
+}
+
+async function guardarDetalleReservacion() {
+  if (!_modalReservaActiva) return;
+  const btn = document.getElementById('btnGuardarDetalle');
+  btn.disabled = true;
+  btn.innerText = 'Guardando...';
+
+  try {
+    const res = await fetch(`/api/reservaciones/${_modalReservaActiva.id_reservation}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nombre_cliente:    document.getElementById('editDetalleCliente').value.trim(),
+        precio_final:      parseFloat(document.getElementById('editDetallePrecio').value) || null,
+        contacto_nombre:   document.getElementById('editDetalleContacto').value.trim() || null,
+        contacto_telefono: document.getElementById('editDetalleTelefono').value.trim() || null,
+        contacto_email:    document.getElementById('editDetalleEmail').value.trim()    || null,
+        notas:             document.getElementById('editDetalleNotas').value.trim()    || null,
+      })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    cerrarModalReservacion();
+    await cargarEstrategiaMesCompletoConIA(true);
+  } catch (err) {
+    alert('Error al guardar: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = '💾 Guardar';
+  }
 }
 
 function cerrarModalReservacion() {
@@ -706,9 +935,13 @@ function cerrarModalReservacion() {
 }
 
 async function confirmarReservacion() {
-  const nombre  = document.getElementById('inputNombreCliente').value.trim() || 'Cliente Gala';
-  const precio  = parseFloat(document.getElementById('inputPrecioFinal').value);
-  const fecha   = _modalFechaActiva;
+  const nombre        = document.getElementById('inputNombreCliente').value.trim() || 'Cliente Gala';
+  const precio        = parseFloat(document.getElementById('inputPrecioFinal').value);
+  const fecha         = _modalFechaActiva;
+  const contactName   = document.getElementById('inputContactName').value.trim()  || null;
+  const contactPhone  = document.getElementById('inputContactPhone').value.trim() || null;
+  const contactEmail  = document.getElementById('inputContactEmail').value.trim() || null;
+  const clientNotes   = document.getElementById('inputClientNotes').value.trim()  || null;
 
   if (!fecha || isNaN(precio) || precio <= 0) {
     alert('Por favor ingresa un precio válido.');
@@ -723,7 +956,15 @@ async function confirmarReservacion() {
     const res = await fetch('/api/reservaciones', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fecha_evento: fecha, precio_final: precio, nombre_cliente: nombre })
+      body: JSON.stringify({
+        fecha_evento: fecha,
+        precio_final: precio,
+        nombre_cliente: nombre,
+        client_primary_contact_name:  contactName,
+        client_primary_contact_phone: contactPhone,
+        client_primary_contact_email: contactEmail,
+        client_notes: clientNotes,
+      })
     });
     const data = await res.json();
     if (!res.ok) {
@@ -731,7 +972,7 @@ async function confirmarReservacion() {
       return;
     }
     cerrarModalReservacion();
-    await renderizarCalendarioDinamico(); // Refrescar calendario con el nuevo dato
+    await cargarEstrategiaMesCompletoConIA(true);
   } catch (e) {
     alert('No se pudo conectar con el servidor.');
     console.error(e);
@@ -754,7 +995,7 @@ async function eliminarReservacion() {
     });
     if (res.ok) {
       cerrarModalReservacion();
-      await renderizarCalendarioDinamico();
+      await cargarEstrategiaMesCompletoConIA(true);
     } else {
       alert('Error al cancelar la reservación.');
     }
@@ -771,163 +1012,86 @@ document.addEventListener('click', (e) => {
   if (overlay && e.target === overlay) cerrarModalReservacion();
 });
 
-function generarGraficaHistoricaOcupacion() {
-  const chart = document.getElementById("chartBars"); if (!chart) return; chart.innerHTML = "";
-  const mockData = [{ mes: "Ene", valor: 20 }, { mes: "Feb", valor: 35 }, { mes: "Mar", valor: 50 }, { mes: "Abr", valor: 55 }, { mes: "May", valor: 80 }, { mes: "Jun", valor: 85 }, { mes: "Jul", valor: 60 }, { mes: "Ago", valor: 40 }, { mes: "Sep", valor: 25 }, { mes: "Oct", valor: 75 }, { mes: "Nov", valor: 95 }, { mes: "Dic", valor: 100 }];
-  mockData.forEach(item => {
-    const wrapper = document.createElement("div"); wrapper.classList.add("chart-bar-wrapper");
-    wrapper.innerHTML = `<div class="chart-value">${item.valor}%</div><div class="chart-bar" style="height:${item.valor * 1.3}px"></div><div class="chart-month">${item.mes}</div>`;
-    chart.appendChild(wrapper);
-  });
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  sidebar.classList.toggle('-translate-x-full');
+  overlay.classList.toggle('hidden');
 }
 
-/* ==========================================================================
-   PERIODOS ESPECIALES — Carga, guardado y renderizado
-   ========================================================================== */
-let periodosEspeciales = []; // Estado local
+async function generarGraficaHistoricaOcupacion() {
+  const chart = document.getElementById("chartBars");
+  if (!chart) return;
+  chart.innerHTML = "";
+  const chartLabels = document.getElementById("chartLabels");
+  if (chartLabels) chartLabels.innerHTML = "";
 
-async function cargarPeriodosEspeciales() {
+  // 1. Obtener todas las reservaciones reales
+  let reservacionesReales = [];
   try {
-    const response = await fetch("http://localhost:3000/periodos-especiales");
-    if (response.ok) {
-      periodosEspeciales = await response.json();
-      renderizarPeriodosEspeciales();
-    }
-  } catch (error) {
-    console.warn("No se pudieron cargar los periodos especiales.", error);
+    const res = await fetch('/api/reservaciones');
+    if (res.ok) reservacionesReales = await res.json();
+  } catch (e) {
+    console.warn('Error al cargar datos para la gráfica', e);
   }
-}
 
-function renderizarPeriodosEspeciales() {
-  const tbody = document.getElementById("tbodyPeriodosEspeciales");
-  if (!tbody) return;
+  const anioInicio = 2026;
+  const anioFin = 2027;
+  const mesesNombres = ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"];
+  
+  const chartData = [];
 
-  tbody.innerHTML = "";
+  for (let y = anioInicio; y <= anioFin; y++) {
+    for (let m = 0; m < 12; m++) {
+      const diasEnElMes = new Date(y, m + 1, 0).getDate();
+      const reservacionesDelMes = reservacionesReales.filter(r => {
+        if (!r.fecha_evento) return false;
+        const [rYear, rMonth] = r.fecha_evento.split('-');
+        return parseInt(rYear) === y && parseInt(rMonth) === (m + 1);
+      }).length;
 
-  // Fila de entrada para agregar nuevo periodo
-  const filaInput = document.createElement("tr");
-  filaInput.id = "fila-nuevo-periodo";
-  filaInput.innerHTML = `
-    <td>
-      <div class="rango-fecha-container">
-        <input type="text" id="nombreEspecial" class="input-date-custom" placeholder="Nombre" style="width:90px">
-        <input type="date" id="fechaInicioEspecial" class="input-date-custom">
-        <span class="separador-fecha">al</span>
-        <input type="date" id="fechaFinEspecial" class="input-date-custom">
-      </div>
-    </td>
-    <td style="text-align: center; vertical-align: middle;">
-      <select id="selectNuevoPeriodoUser" class="select-peso-usuario medio" onchange="aplicarColorSelectorPeriodo(this)">
-        <option value="Muy alto">Muy Alto</option>
-        <option value="Alto">Alto</option>
-        <option value="Medio" selected>Medio</option>
-        <option value="Bajo">Bajo</option>
-        <option value="Muy bajo">Muy Bajo</option>
-      </select>
-    </td>
-    <td style="text-align: center; vertical-align: middle;">
-      <button onclick="guardarNuevoPeriodoEspecial()" class="save-config-inline-btn">+ Guardar</button>
-    </td>
-  `;
-  tbody.appendChild(filaInput);
+      const porcentaje = Math.round((reservacionesDelMes / diasEnElMes) * 100);
 
-  // Filas de periodos ya guardados
-  periodosEspeciales.forEach(p => {
-    const clase = mapaClasesPesos[p.pond_especial_user] || "medio";
-    const claseIA = mapaClasesPesos[p.pond_especial_ia] || "medio";
+      // Solo agregar si es > 1%
+      if (porcentaje > 1) {
+        chartData.push({ mes: `${mesesNombres[m]} ${y.toString().slice(-2)}`, valor: porcentaje });
+      }
+    }
+  }
 
-    const fila = document.createElement("tr");
-    fila.dataset.idPeriodo = p.id_fecha_especial;
-    fila.innerHTML = `
-      <td>
-        <div class="rango-fecha-container">
-          <strong>${p.nombre}</strong>&nbsp;
-          <span style="color:var(--text-muted); font-size:0.8rem">${p.fecha_inicio} al ${p.fecha_fin}</span>
-        </div>
-      </td>
-      <td style="text-align: center; vertical-align: middle;">
-        <select class="select-peso-usuario ${clase}" data-id="${p.id_fecha_especial}" onchange="actualizarPeriodoEspecialExistente(this)">
-          <option value="Muy alto" ${p.pond_especial_user === 'Muy alto' ? 'selected' : ''}>Muy Alto</option>
-          <option value="Alto" ${p.pond_especial_user === 'Alto' ? 'selected' : ''}>Alto</option>
-          <option value="Medio" ${p.pond_especial_user === 'Medio' ? 'selected' : ''}>Medio</option>
-          <option value="Bajo" ${p.pond_especial_user === 'Bajo' ? 'selected' : ''}>Bajo</option>
-          <option value="Muy bajo" ${p.pond_especial_user === 'Muy bajo' ? 'selected' : ''}>Muy Bajo</option>
-        </select>
-      </td>
-      <td style="text-align: center; vertical-align: middle;">
-        <div class="contenedor-badge-ia ${claseIA}">${p.pond_especial_ia || '—'}</div>
-        &nbsp;
-        <button onclick="eliminarPeriodoEspecial(${p.id_fecha_especial})" style="background:transparent;border:none;color:#FF4D4D;cursor:pointer;font-weight:bold;">✕</button>
-      </td>
-    `;
-    tbody.appendChild(fila);
-  });
-}
-
-function aplicarColorSelectorPeriodo(sel) {
-  sel.className = "select-peso-usuario " + (mapaClasesPesos[sel.value] || "medio");
-}
-
-async function guardarNuevoPeriodoEspecial() {
-  const nombre     = document.getElementById("nombreEspecial")?.value || "Periodo especial";
-  const fechaInicio = document.getElementById("fechaInicioEspecial")?.value;
-  const fechaFin    = document.getElementById("fechaFinEspecial")?.value;
-  const ponderacion = document.getElementById("selectNuevoPeriodoUser")?.value;
-
-  if (!fechaInicio || !fechaFin || !ponderacion) {
-    alert("Por favor completa las fechas y la ponderación.");
+  if (chartData.length === 0) {
+    chart.innerHTML = "<p style='color:var(--text-muted); font-size:0.9rem; text-align:center; width:100%; margin-top:50px;'>No hay datos suficientes para mostrar.</p>";
     return;
   }
 
-  try {
-    const response = await fetch("http://localhost:3000/periodos-especiales", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        nombre,
-        fecha_inicio: fechaInicio,
-        fecha_fin: fechaFin,
-        pond_especial_user: ponderacion
-      })
+  // 🏆 LÓGICA DE ESCALADO RELATIVO
+  // Encontramos el valor más alto en los datos actuales
+  const maxValor = chartData.reduce((max, item) => Math.max(max, item.valor), 1);
+  const maxBarHeight = 110; // Píxeles máximos de altura visual para la barra más grande
+
+  // 2. DIBUJAR BARRAS DE FONDO (HTML fluidas)
+  chartData.forEach(item => {
+    const scaledHeight = (item.valor / maxValor) * maxBarHeight;
+
+    const wrapper = document.createElement("div");
+    wrapper.classList.add("chart-bar-wrapper");
+    wrapper.innerHTML = `
+      <div class="chart-value">${item.valor}%</div>
+      <div class="chart-bar" style="height:${scaledHeight}px;"></div>
+    `;
+    chart.appendChild(wrapper);
+  });
+
+  // Etiquetas de mes en fila separada para que las barras toquen el fondo exacto
+  if (chartLabels) {
+    chartData.forEach(item => {
+      const lbl = document.createElement("div");
+      lbl.className = "chart-month";
+      lbl.style.flex = "1";
+      lbl.style.textAlign = "center";
+      lbl.textContent = item.mes;
+      chartLabels.appendChild(lbl);
     });
-
-    if (response.ok) {
-      console.log("💾 Periodo especial guardado.");
-      await cargarPeriodosEspeciales(); // Refresca la tabla
-    } else {
-      const err = await response.json();
-      alert("Error: " + err.error);
-    }
-  } catch (error) {
-    console.error("Error al guardar periodo especial:", error);
   }
-}
 
-async function actualizarPeriodoEspecialExistente(sel) {
-  const id  = sel.dataset.id;
-  const val = sel.value;
-
-  sel.className = "select-peso-usuario " + (mapaClasesPesos[val] || "medio");
-
-  try {
-    await fetch(`http://localhost:3000/periodos-especiales/${id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ pond_especial_user: val })
-    });
-    console.log(`💾 Periodo ${id} actualizado a ${val}`);
-  } catch (error) {
-    console.error("Error al actualizar periodo especial:", error);
-  }
-}
-
-async function eliminarPeriodoEspecial(id) {
-  if (!confirm("¿Eliminar este periodo especial?")) return;
-
-  try {
-    await fetch(`http://localhost:3000/periodos-especiales/${id}`, { method: "DELETE" });
-    await cargarPeriodosEspeciales();
-  } catch (error) {
-    console.error("Error al eliminar periodo especial:", error);
-  }
 }
