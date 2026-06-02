@@ -6,7 +6,13 @@ services:
     build: ./backend
     container_name: ziba_backend
     environment:
-      - DB_HOST=10.207.64.123
+      - DB_HOST=${DB_HOST:-10.207.64.123}
+      - DB_USER=${DB_USER:-admin}
+      - DB_PASSWORD=${DB_PASSWORD:-admin}
+      - DB_NAME=${DB_NAME:-ziba}
+      - DB_PORT=${DB_PORT:-5432}
+    ports:
+      - "3000:3000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O- http://localhost:3000/health || exit 1"]
@@ -21,6 +27,8 @@ services:
   frontend:
     build: ./frontend
     container_name: ziba_frontend
+    ports:
+      - "8080:80"
     restart: unless-stopped
     depends_on:
       backend:
@@ -36,4 +44,4 @@ services:
 
 networks:
   web-network:
-    external: true
+    external: false
