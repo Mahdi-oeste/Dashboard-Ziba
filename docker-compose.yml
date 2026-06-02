@@ -1,47 +1,29 @@
-version: '3.9'
+# Base — shared by local and production
+# Local:      docker-compose up --build          (auto-loads docker-compose.override.yml)
+# Production: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
 services:
-  # 1. CONTENEDOR DEL BACKEND
   backend:
     build: ./backend
     container_name: ziba_backend
     environment:
-      - DB_HOST=${DB_HOST:-10.207.64.123}
+      - DB_HOST=${DB_HOST:-172.31.46.37}
       - DB_USER=${DB_USER:-admin}
       - DB_PASSWORD=${DB_PASSWORD:-admin}
       - DB_NAME=${DB_NAME:-ziba}
       - DB_PORT=${DB_PORT:-5432}
-    ports:
-      - "3000:3000"
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "wget -q -O- http://localhost:3000/health || exit 1"]
-      interval: 3s
+      interval: 5s
       timeout: 5s
       retries: 15
       start_period: 20s
-    networks:
-      - web-network
 
-  # 2. CONTENEDOR DEL FRONTEND
   frontend:
     build: ./frontend
     container_name: ziba_frontend
-    ports:
-      - "8080:80"
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.app2.rule=Host(`zibareservaciones.oeste.mx`)"
-      - "traefik.http.routers.app2.entrypoints=websecure"
-      - "traefik.http.routers.app2.tls.certresolver=myresolver"
-      - "traefik.http.services.app2.loadbalancer.server.port=80"
-    networks:
-      - web-network
-
-networks:
-  web-network:
-    external: false
