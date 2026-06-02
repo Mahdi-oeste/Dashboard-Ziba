@@ -221,7 +221,8 @@ app.get("/periodos-especiales", async (req, res) => {
       `SELECT id_fecha_especial AS id, nombre,
               TO_CHAR(fecha_inicio,'YYYY-MM-DD') AS fecha_inicio,
               TO_CHAR(fecha_fin,   'YYYY-MM-DD') AS fecha_fin,
-              pond_especial_user AS pond_user
+              pond_especial_user AS pond_user,
+              pond_especial_ia   AS pond_ia
        FROM fechas_especiales ORDER BY fecha_inicio`
     );
     res.json(r.rows);
