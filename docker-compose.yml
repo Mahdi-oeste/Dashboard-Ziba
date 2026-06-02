@@ -40,4 +40,4 @@ services:
 
 networks:
   web-network:
-    external: false
+    external: true
