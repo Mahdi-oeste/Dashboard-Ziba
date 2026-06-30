@@ -1,0 +1,223 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================================================
+   Jardin Ziba - Design System
+   Paleta tomada de styles.css del usuario:
+
+   BRAND:
+     primary   #F4981B    naranja brand (botones, sidebar activo, acentos)
+     ai-blue   #0266E8    azul info (links, secundario)
+
+   NEUTRALES:
+     bg        #F7F8FA    fondo app
+     card      #FFFFFF
+     text      #1E2022    texto principal
+     muted     #555555    texto secundario
+     gray      #BCBABB    neutro/sin datos
+     border    rgba(188,186,187,0.3)
+
+   SEMAFORO 5-tier (mapea a la escala de score):
+     very-high #009e3d  verde       Excelente (8-10)
+     high      #d1e64b  lima        Bueno (6-7.9)
+     medio     #f79f1f  ambar       Regular (4-5.9)
+     low       #e75d4b  naranja-rojo Deficiente (2-3.9)
+     very-low  #cf1c28  rojo        Muy deficiente (0-1.9)
+     null      #BCBABB  gris        Sin datos
+   ========================================================================== */
+
+@layer base {
+  :root {
+    /* ===== Surfaces ===== */
+    --background: 220 14% 97.5%;       /* #F7F8FA */
+    --foreground: 210 6% 12%;          /* #1E2022 */
+    --card: 0 0% 100%;
+    --card-foreground: 210 6% 12%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 6% 12%;
+
+    /* ===== Brand ===== */
+    --primary: 33 91% 53%;             /* #F4981B */
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 33 91% 63%;
+
+    --secondary: 215 97% 46%;          /* #0266E8 ai-blue */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 220 14% 94%;
+    --muted-foreground: 0 0% 33%;      /* #555555 */
+
+    --accent: 215 97% 46%;             /* #0266E8 */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 357 75% 46%;        /* #cf1c28 very-low */
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 240 3% 87%;              /* derivado de rgba(188,186,187,0.3) */
+    --input: 240 3% 87%;
+    --ring: 33 91% 53%;
+
+    --success: 142 100% 31%;           /* #009e3d very-high */
+    --success-foreground: 0 0% 100%;
+    --warning: 33 92% 54%;             /* #f79f1f medio */
+    --warning-foreground: 39 100% 12%; /* #3B2A00 */
+    --info: 215 97% 46%;
+    --info-foreground: 0 0% 100%;
+
+    /* ===== Paleta tokens directos ===== */
+    --c-primary: 33 91% 53%;           /* #F4981B */
+    --c-primary-soft: 33 91% 95%;
+    --c-blue: 215 97% 46%;             /* #0266E8 */
+    --c-blue-soft: 215 97% 95%;
+    --c-black: 0 0% 0%;
+    --c-text: 210 6% 12%;              /* #1E2022 */
+    --c-muted: 0 0% 33%;                /* #555555 */
+    --c-gray: 240 2% 73%;               /* #BCBABB */
+
+    /* ===== Semaforo 5-tier (escala de score) ===== */
+    --semaforo-very-low: 357 75% 46%;    /* #cf1c28 */
+    --semaforo-low:      8 76% 60%;      /* #e75d4b */
+    --semaforo-medio:    33 92% 54%;     /* #f79f1f */
+    --semaforo-high:     68 73% 60%;     /* #d1e64b */
+    --semaforo-very-high: 142 100% 31%;  /* #009e3d */
+
+    /* Texto del semaforo segun bg (contraste optimo) */
+    --semaforo-very-low-text:  0 0% 100%;
+    --semaforo-low-text:       0 0% 100%;
+    --semaforo-medio-text:     39 100% 12%;  /* #3B2A00 */
+    --semaforo-high-text:      60 100% 12%;  /* #3B3A00 */
+    --semaforo-very-high-text: 0 0% 100%;
+
+    /* ===== Score (escala con semaforo) ===== */
+    --score-0:    357 75% 46%;   /* very-low  red */
+    --score-3:    8 76% 60%;     /* low       orange-red */
+    --score-6:    33 92% 54%;    /* medio     amber */
+    --score-8:    68 73% 60%;    /* high      lime */
+    --score-10:   142 100% 31%;  /* very-high green */
+    --score-null: 240 2% 73%;    /* gray      sin datos */
+
+    /* ===== Indicators - colores semanticos distinguibles ===== */
+    --ind-satisfaccion: 142 100% 31%;     /* verde */
+    --ind-satisfaccion-soft: 142 100% 92%;
+    --ind-instalaciones: 215 97% 46%;     /* ai-blue */
+    --ind-instalaciones-soft: 215 97% 92%;
+    --ind-accesibilidad: 33 91% 53%;      /* primary orange */
+    --ind-accesibilidad-soft: 33 91% 92%;
+    --ind-seguridad: 210 6% 12%;          /* text dark */
+    --ind-seguridad-soft: 240 5% 92%;
+    --ind-clima: 8 76% 60%;               /* low orange-red para Clima */
+    --ind-clima-soft: 8 76% 94%;
+
+    /* ===== Sources ===== */
+    --src-instagram: 326 60% 48%;
+    --src-instagram-end: 270 45% 42%;
+    --src-tiktok: 0 0% 0%;
+    --src-tiktok-end: 348 85% 56%;
+    --src-tiktok-ink: 0 0% 8%;
+    --src-google: 215 97% 46%;
+    --src-google-end: 142 100% 31%;
+
+    /* ===== Sentiment (alineado con semaforo) ===== */
+    --sent-positive: 142 100% 31%;       /* verde */
+    --sent-neutral: 33 92% 54%;          /* medio amber */
+    --sent-negative: 357 75% 46%;        /* very-low red */
+
+    --radius: 0.75rem;                   /* 12px ~ radius-md del adjunto */
+    --radius-lg: 1.125rem;               /* 18px ~ radius-lg del adjunto */
+
+    --gradient-primary: linear-gradient(135deg, hsl(var(--c-primary)) 0%, hsl(var(--c-primary) / 0.7) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(var(--c-primary)) 0%, hsl(var(--c-blue)) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(0 0% 100%) 0%, hsl(220 14% 99%) 100%);
+    --gradient-instagram: linear-gradient(135deg, hsl(var(--src-instagram)) 0%, hsl(var(--src-instagram-end)) 100%);
+    --gradient-tiktok: linear-gradient(135deg, hsl(var(--src-tiktok)) 0%, hsl(var(--src-tiktok-end)) 100%);
+    --gradient-google: linear-gradient(135deg, hsl(var(--src-google)) 0%, hsl(var(--src-google-end)) 100%);
+
+    --shadow-elegant: 0 10px 25px hsl(0 0% 0% / 0.05);
+    --shadow-card: 0 4px 12px hsl(0 0% 0% / 0.03);
+    --shadow-soft: 0 1px 3px hsl(0 0% 0% / 0.02);
+    --shadow-glow: 0 0 20px -4px hsl(var(--primary) / 0.30);
+
+    --transition-smooth: all 0.25s ease;
+    --transition-bounce: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    /* ===== Sidebar clara con activo naranja brand ===== */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 210 6% 12%;
+    --sidebar-primary: 33 91% 53%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 210 6% 12%;
+    --sidebar-border: 240 3% 87%;
+    --sidebar-ring: 33 91% 53%;
+
+    --font-sans: 'Calibri', 'Segoe UI', 'Inter', system-ui, Arial, sans-serif;
+    --font-mono: 'Calibri', 'Segoe UI', 'Inter', system-ui, monospace;
+    --font-serif: 'Calibri', 'Segoe UI', 'Inter', system-ui, Arial, sans-serif;
+  }
+
+  .dark {
+    --background: 210 6% 8%;
+    --foreground: 220 14% 96%;
+    --card: 210 6% 12%;
+    --card-foreground: 220 14% 96%;
+    --popover: 210 6% 12%;
+    --popover-foreground: 220 14% 96%;
+    --primary: 33 91% 58%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 215 97% 55%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 210 6% 18%;
+    --muted-foreground: 220 14% 65%;
+    --accent: 215 97% 55%;
+    --accent-foreground: 0 0% 100%;
+    --border: 210 6% 22%;
+    --input: 210 6% 22%;
+    --ring: 33 91% 58%;
+    --sidebar-background: 210 6% 6%;
+    --sidebar-foreground: 220 14% 92%;
+  }
+
+  :root[data-domain="sectur"] {
+    --primary: 343 100% 20%;
+    --primary-foreground: 0 0% 100%;
+    --primary-glow: 343 100% 30%;
+  }
+}
+
+@layer base {
+  * { @apply border-border; }
+  html { font-size: 17px; }
+  html, body { font-family: var(--font-sans); }
+  body {
+    @apply bg-background text-foreground antialiased;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+  }
+  .font-serif-display { font-family: var(--font-sans); font-weight: 700; letter-spacing: -0.01em; }
+  .font-mono-data { font-family: var(--font-sans); font-variant-numeric: tabular-nums; }
+  h1, h2, h3, h4, h5, h6 { font-weight: 700; letter-spacing: -0.01em; color: hsl(var(--c-text)); }
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+}
+
+@keyframes fade-in-up { 0% { opacity: 0; transform: translateY(8px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes fade-in { 0% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes scale-in { 0% { opacity: 0; transform: scale(0.96); } 100% { opacity: 1; transform: scale(1); } }
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0.35); }
+  70% { box-shadow: 0 0 0 12px hsl(var(--primary) / 0); }
+  100% { box-shadow: 0 0 0 0 hsl(var(--primary) / 0); }
+}
+
+@layer utilities {
+  .animate-fade-in-up { animation: fade-in-up 0.35s ease-out both; }
+  .animate-fade-in { animation: fade-in 0.4s ease-out both; }
+  .animate-scale-in { animation: scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both; }
+  .animate-pulse-ring { animation: pulse-ring 1.6s ease-out infinite; }
+
+  .scrollbar-thin::-webkit-scrollbar { width: 8px; height: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: hsl(var(--c-gray)); border-radius: 4px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: hsl(var(--c-muted)); }
+}

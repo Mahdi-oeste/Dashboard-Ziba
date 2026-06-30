@@ -1,0 +1,59 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "useDefineForClassFields": true,
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "react-jsx",
+
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "noImplicitAny": false,
+    "noFallthroughCasesInSwitch": false,
+
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src"],
+  "exclude": [
+    "src/components/destination/AIEvaluation.tsx",
+    "src/components/destination/HotelPricesChart.tsx",
+    "src/components/destination/SegmentsChart.tsx",
+    "src/components/destination/TravelReasonsChart.tsx",
+    "src/components/StackedVisitorInternationalChart.tsx",
+    "src/components/StackedVisitorLocationChart.tsx",
+    "src/components/VisitorsWorldMap.tsx",
+    "src/pages/Segmentos.tsx",
+    "src/pages/Destinos.tsx",
+    "src/pages/DestinationDetail.tsx",
+    "src/pages/Admin.tsx",
+    "src/pages/OrganizationConfig.tsx",
+    "src/pages/IndicatorsConfig.tsx",
+    "src/pages/Tablero.tsx",
+    "src/pages/PublicDashboard.tsx",
+    "src/pages/PublicTablero.tsx",
+    "src/pages/TimeseriesComments.tsx",
+    "src/pages/TimeseriesSegments.tsx",
+    "src/pages/TimeseriesSegmentCounts.tsx",
+    "src/pages/Usuario.tsx",
+    "src/pages/Index.tsx",
+    "src/pages/NotFound.tsx",
+    "src/lib/pdfExport.ts",
+    "src/lib/mockSentimentData.ts",
+    "src/lib/destinationService.ts",
+    "src/lib/organizationService.ts",
+    "src/lib/segmentService.ts",
+    "src/lib/timeseriesService.ts",
+    "src/lib/timeseriesExportService.ts",
+    "src/lib/visitorService.ts"
+  ]
+}
