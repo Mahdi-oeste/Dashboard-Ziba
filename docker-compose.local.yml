@@ -2,11 +2,10 @@
 #  ziba-calendar — Stack local (sin Traefik / sin TLS)
 #
 #  Uso:
-#    1) Ajusta DATABASE_URL en .env si es necesario
-#    2) docker compose -f docker-compose.local.yml up -d --build
-#    3) http://localhost:8080
-#    4) API directa: http://localhost:3001/healthz
-#    5) Apagar: docker compose -f docker-compose.local.yml down
+#    1) docker compose -f docker-compose.local.yml up -d --build
+#    2) http://localhost:8080
+#    3) API directa: http://localhost:3001/healthz
+#    4) Apagar: docker compose -f docker-compose.local.yml down
 # ============================================================================
 
 services:
@@ -15,11 +14,9 @@ services:
       context: ./backend
     container_name: ziba_cal_api_local
     restart: unless-stopped
-    env_file:
-      - .env
     environment:
-      DATABASE_URL: ${DATABASE_URL:?define DATABASE_URL en .env}
-      DB_SCHEMA: ${DB_SCHEMA:-public}
+      DATABASE_URL: postgresql://admin:admin@10.207.64.123:5432/ziba
+      DB_SCHEMA: public
       PORT: '3001'
       CORS_ORIGINS: '*'
     ports:
@@ -38,6 +35,7 @@ services:
         VITE_AUTH_DISABLED: 'false'
         VITE_AUTHORITY: 'https://auth.oeste.mx/realms/ziba-calendario'
         VITE_CLIENT_ID: 'ziba-frontend'
+        VITE_GEMINI_API_KEY: 'AQ.Ab8RN6KQSsOxZD_wIJeRYKlknBY2hQd2rh-HKgoBnEGXqCj3rA'
     container_name: ziba_cal_frontend_local
     restart: unless-stopped
     depends_on:

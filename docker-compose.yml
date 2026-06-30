@@ -6,10 +6,9 @@
 #    - Red externa creada: docker network create web-network
 #
 #  Uso:
-#    1) Ajusta DATABASE_URL en .env
-#    2) docker compose up -d --build
-#    3) https://zibareservaciones.oeste.mx
-#    4) Apagar: docker compose down
+#    1) docker compose up -d --build
+#    2) https://zibareservaciones.oeste.mx
+#    3) Apagar: docker compose down
 # ============================================================================
 
 services:
@@ -19,8 +18,8 @@ services:
     container_name: ziba_cal_api
     restart: unless-stopped
     environment:
-      DATABASE_URL: ${DATABASE_URL:?define DATABASE_URL en .env}
-      DB_SCHEMA: ${DB_SCHEMA:-public}
+      DATABASE_URL: postgresql://admin:admin@172.31.46.37:5432/ziba
+      DB_SCHEMA: public
       PORT: '3001'
       CORS_ORIGINS: '*'
     healthcheck:
@@ -41,6 +40,7 @@ services:
         VITE_AUTH_DISABLED: 'false'
         VITE_AUTHORITY: 'https://auth.oeste.mx/realms/ziba-calendario'
         VITE_CLIENT_ID: 'ziba-frontend'
+        VITE_GEMINI_API_KEY: 'AQ.Ab8RN6KQSsOxZD_wIJeRYKlknBY2hQd2rh-HKgoBnEGXqCj3rA'
     container_name: ziba_cal_frontend
     restart: unless-stopped
     depends_on:
