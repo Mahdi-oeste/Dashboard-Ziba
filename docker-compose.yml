@@ -1,0 +1,60 @@
+# ============================================================================
+#  ziba-calendar — Stack producción con Traefik
+#
+#  Requisitos previos en el servidor:
+#    - Traefik corriendo (desde ziba-app/docker-compose.yml)
+#    - Red externa creada: docker network create web-network
+#
+#  Uso:
+#    1) Ajusta DATABASE_URL en .env
+#    2) docker compose up -d --build
+#    3) https://zibareservaciones.oeste.mx
+#    4) Apagar: docker compose down
+# ============================================================================
+
+services:
+  api:
+    build:
+      context: ./backend
+    container_name: ziba_cal_api
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: ${DATABASE_URL:?define DATABASE_URL en .env}
+      DB_SCHEMA: ${DB_SCHEMA:-public}
+      PORT: '3001'
+      CORS_ORIGINS: '*'
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3001/healthz"]
+      interval: 5s
+      timeout: 5s
+      retries: 15
+      start_period: 20s
+    networks:
+      - web-network
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE: /api
+        VITE_ZIBA_API_URL: /api
+        VITE_AUTH_DISABLED: 'false'
+        VITE_AUTHORITY: 'https://auth.oeste.mx/realms/ziba-calendario'
+        VITE_CLIENT_ID: 'ziba-frontend'
+    container_name: ziba_cal_frontend
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.ziba-cal.rule=Host(`zibareservaciones.oeste.mx`)"
+      - "traefik.http.routers.ziba-cal.entrypoints=websecure"
+      - "traefik.http.routers.ziba-cal.tls.certresolver=myresolver"
+      - "traefik.http.services.ziba-cal.loadbalancer.server.port=80"
+    networks:
+      - web-network
+
+networks:
+  web-network:
+    external: true
