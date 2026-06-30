@@ -12,14 +12,16 @@ ARG VITE_API_BASE=/api
 ARG VITE_AUTHORITY
 ARG VITE_CLIENT_ID
 ARG VITE_AUTH_DISABLED
+ARG VITE_GEMINI_API_KEY
 ENV VITE_ZIBA_API_URL=${VITE_ZIBA_API_URL} \
     VITE_API_BASE=${VITE_API_BASE} \
     VITE_AUTHORITY=${VITE_AUTHORITY} \
     VITE_CLIENT_ID=${VITE_CLIENT_ID} \
-    VITE_AUTH_DISABLED=${VITE_AUTH_DISABLED}
+    VITE_AUTH_DISABLED=${VITE_AUTH_DISABLED} \
+    VITE_GEMINI_API_KEY=${VITE_GEMINI_API_KEY}
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npm run build
+RUN node node_modules/vite/bin/vite.js build
 
 FROM nginx:1.27-alpine AS runtime
 COPY --from=build /app/dist /usr/share/nginx/html
