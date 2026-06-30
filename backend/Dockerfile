@@ -9,7 +9,7 @@ FROM node:20-alpine AS build
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx tsc -p tsconfig.json
+RUN node node_modules/typescript/bin/tsc -p tsconfig.json
 
 FROM node:20-alpine AS runtime
 ENV NODE_ENV=production
