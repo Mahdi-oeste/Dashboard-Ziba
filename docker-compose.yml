@@ -12,10 +12,10 @@
 # ============================================================================
 
 services:
-  api:
+  backend:
     build:
       context: ./backend
-    container_name: ziba_cal_api
+    container_name: ziba_cal_backend
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://admin:admin@172.31.46.37:5432/ziba
@@ -44,7 +44,7 @@ services:
     container_name: ziba_cal_frontend
     restart: unless-stopped
     depends_on:
-      api:
+      backend:
         condition: service_healthy
     labels:
       - "traefik.enable=true"

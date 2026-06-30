@@ -9,10 +9,10 @@
 # ============================================================================
 
 services:
-  api:
+  backend:
     build:
       context: ./backend
-    container_name: ziba_cal_api_local
+    container_name: ziba_cal_backend_local
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://admin:admin@10.207.64.123:5432/ziba
@@ -39,7 +39,7 @@ services:
     container_name: ziba_cal_frontend_local
     restart: unless-stopped
     depends_on:
-      - api
+      - backend
     ports:
       - "8080:80"
     networks:
